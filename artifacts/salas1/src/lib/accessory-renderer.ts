@@ -254,6 +254,29 @@ function getMask(
     }
   }
 
+  // Fill only the gaps enclosed by the real visor silhouette. Using a
+  // scanline between the detected accessory edges follows every animation
+  // frame and direction without inventing a larger hand-drawn rectangle.
+  for (let y = boundY; y < boundY + boundHeight; y += 1) {
+    let left = boundX + boundWidth;
+    let right = boundX - 1;
+    for (let x = boundX; x < boundX + boundWidth; x += 1) {
+      if (!nearGogglePixels[y * canvas.width + x]) continue;
+      left = Math.min(left, x);
+      right = Math.max(right, x);
+    }
+    if (right < left) continue;
+
+    for (let x = left; x <= right; x += 1) {
+      const index = (y * canvas.width + x) * 4;
+      if (pixels.data[index + 3] !== 0) continue;
+      pixels.data[index] = 255;
+      pixels.data[index + 1] = 255;
+      pixels.data[index + 2] = 255;
+      pixels.data[index + 3] = 255;
+    }
+  }
+
   context.putImageData(pixels, 0, 0);
   maskCache.set(key, canvas);
   return canvas;
@@ -267,67 +290,6 @@ function parseHexColor(color: string): [number, number, number] {
     Number.parseInt(match[1].slice(2, 4), 16),
     Number.parseInt(match[1].slice(4, 6), 16),
   ];
-}
-
-function drawSolidVisorBase(
-  context: CanvasRenderingContext2D,
-  row: number,
-  color: string,
-): void {
-  context.save();
-  context.fillStyle = color;
-  context.beginPath();
-
-  switch (Math.max(0, Math.min(4, Math.round(row)))) {
-    case 0:
-      // Front view: a rounded visor with a shallow dip around the nose.
-      context.moveTo(153, 178);
-      context.lineTo(300, 178);
-      context.quadraticCurveTo(315, 180, 316, 194);
-      context.lineTo(316, 239);
-      context.quadraticCurveTo(315, 254, 299, 257);
-      context.lineTo(247, 252);
-      context.quadraticCurveTo(230, 249, 215, 253);
-      context.lineTo(159, 258);
-      context.quadraticCurveTo(143, 255, 142, 240);
-      context.lineTo(142, 198);
-      context.quadraticCurveTo(143, 182, 153, 178);
-      break;
-    case 1:
-      // Three-quarter view: the visor is angled down toward the back.
-      context.moveTo(151, 175);
-      context.lineTo(276, 211);
-      context.quadraticCurveTo(291, 216, 292, 229);
-      context.lineTo(279, 258);
-      context.quadraticCurveTo(273, 271, 259, 269);
-      context.lineTo(224, 253);
-      context.quadraticCurveTo(209, 246, 194, 247);
-      context.lineTo(153, 231);
-      context.quadraticCurveTo(138, 225, 138, 212);
-      context.lineTo(144, 185);
-      context.quadraticCurveTo(146, 178, 151, 175);
-      break;
-    case 2:
-      // Side view: only the short front-facing visor plate is visible.
-      context.moveTo(151, 187);
-      context.lineTo(235, 187);
-      context.quadraticCurveTo(248, 189, 249, 201);
-      context.lineTo(248, 239);
-      context.quadraticCurveTo(247, 252, 235, 254);
-      context.lineTo(207, 251);
-      context.quadraticCurveTo(194, 248, 183, 246);
-      context.lineTo(153, 241);
-      context.quadraticCurveTo(146, 237, 146, 228);
-      context.lineTo(146, 199);
-      context.quadraticCurveTo(146, 190, 151, 187);
-      break;
-    default:
-      break;
-  }
-
-  context.closePath();
-  context.fill();
-  context.restore();
 }
 
 function getTintedMask(
@@ -353,7 +315,6 @@ function getTintedMask(
   if (!context) return null;
 
   context.imageSmoothingEnabled = false;
-  drawSolidVisorBase(context, safeRow, color);
   context.drawImage(mask, 0, 0);
   const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
   const [targetRed, targetGreen, targetBlue] = parseHexColor(color);
