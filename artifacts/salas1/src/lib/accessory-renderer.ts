@@ -41,6 +41,7 @@ const SHEET_WIDTH = 460;
 const SHEET_SCALE = 0.20;
 const SHEET_FOOT_Y = 430;
 const ACCESSORY_MASK_RADIUS = 9;
+const ACCESSORY_FRAME_RADIUS = 5;
 const SHEET_BACKGROUND_THRESHOLD = 235;
 const SOFT_BACKGROUND_THRESHOLD = 220;
 const SOFT_BACKGROUND_MAX_SPREAD = 14;
@@ -135,6 +136,7 @@ function getMask(
   const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
   const gogglePixels = new Uint8Array(canvas.width * canvas.height);
   const nearGogglePixels = new Uint8Array(canvas.width * canvas.height);
+  const accessoryFramePixels = new Uint8Array(canvas.width * canvas.height);
 
   // The source sheet is a complete character, not an isolated accessory.
   // Cyan/teal pixels are unique to the goggles, so use them as seeds and
@@ -193,6 +195,12 @@ function getMask(
             neighborY < canvas.height
           ) {
             nearGogglePixels[neighborY * canvas.width + neighborX] = 1;
+            if (
+              offsetX * offsetX + offsetY * offsetY <=
+              ACCESSORY_FRAME_RADIUS * ACCESSORY_FRAME_RADIUS
+            ) {
+              accessoryFramePixels[neighborY * canvas.width + neighborX] = 1;
+            }
           }
         }
       }
@@ -215,7 +223,8 @@ function getMask(
       const isCharacterOutline =
         red < 100 &&
         green < 55 &&
-        blue < 100;
+        blue < 100 &&
+        !accessoryFramePixels[y * canvas.width + x];
       const channelSpread = Math.max(red, green, blue) - Math.min(red, green, blue);
       // These sheets are RGB PNGs with a #FFFEFF matte, not transparent art.
       // Never derive alpha from brightness: doing so leaves a low-alpha
