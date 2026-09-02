@@ -20,7 +20,7 @@ const AVATAR_OPTIONS = {
   shirtColors: ["#E74C3C", "#3498DB", "#2ECC71", "#F39C12", "#9B59B6", "#1ABC9C", "#E67E22", "#ECF0F1", "#2C3E50", "#F8C471"],
   pantColors: ["#2C3E50", "#6E2C00", "#1A5276", "#145A32", "#512E5F", "#17202A", "#7B7D7D", "#F0E6CA"],
   hatStyles: ["none", "cap", "sombrero", "straw", "cowboy", "beanie"],
-  accessories: ["none", "vr-goggles", "glasses", "sunglasses", "scarf", "necklace", "earrings"],
+  accessories: ["none", "vr-goggles"],
 };
 
 router.get("/avatar", requireAuth as any, async (req: AuthRequest, res) => {
