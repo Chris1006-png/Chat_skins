@@ -1309,6 +1309,7 @@ export function IsometricCanvas({
       // Capture state + colors for closure (avoid stale ref in entity draw)
       const lStateSnap = lState;
       const lAvatar    = localAvatarRef.current;
+       const lDancing   = actionType === 'dance' && lStateSnap.animKey === 'swing';
       const lColors: AvatarColors | undefined = lAvatar ? {
         hair:  lAvatar.hairColor,
         skin:  lAvatar.skinColor,
@@ -1319,6 +1320,19 @@ export function IsometricCanvas({
         depth: posRef.current.x + posRef.current.y,
         draw: () => {
           const lFeetY = lsy + TILE_H / 2;
+           if (lDancing && lAvatar?.accessory && lAvatar.accessory !== 'none') {
+             drawAccessoryLayer(
+               ctx,
+               lsx,
+               lFeetY,
+               lStateSnap.row,
+               lStateSnap.flip,
+               lAvatar.accessory,
+               lStateSnap.animKey,
+               lStateSnap.frame,
+               lAvatar.accessoryColor,
+             );
+           }
 drawSpriteCharacter(ctx, lsx, lFeetY, lStateSnap, 'Tú', lColors);
 if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
   const SIT_HAIR_Y_ADJUST = 12; // ajustar este número según pruebas
@@ -1337,7 +1351,7 @@ if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
     lStateSnap.frame,
   );
           }
-           if (lAvatar?.accessory && lAvatar.accessory !== 'none') {
+            if (!lDancing && lAvatar?.accessory && lAvatar.accessory !== 'none') {
              const SIT_ACCESSORY_Y_ADJUST = 12;
              const isSitting = lStateSnap.animKey === 'sit' || lStateSnap.animKey === 'sit_loop';
              const accessoryFeetY = lFeetY + (isSitting ? SIT_ACCESSORY_Y_ADJUST : 0);
@@ -1442,6 +1456,7 @@ if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
           });
         }
         const rStateSnap = rState;
+         const rDancing = remoteAction?.anim?.type === 'dance' && rStateSnap.animKey === 'swing';
         const rColors: AvatarColors | undefined = p.avatar ? {
           hair:  p.avatar.hairColor,
           skin:  p.avatar.skinColor,
@@ -1452,6 +1467,19 @@ if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
           depth,
           draw: () => {
             const rFeetY = ry + TILE_H / 2;
+             if (rDancing && p.avatar?.accessory && p.avatar.accessory !== 'none') {
+               drawAccessoryLayer(
+                 ctx,
+                 rx,
+                 rFeetY,
+                 rStateSnap.row,
+                 rStateSnap.flip,
+                 p.avatar.accessory,
+                 rStateSnap.animKey,
+                 rStateSnap.frame,
+                 p.avatar.accessoryColor,
+               );
+             }
             drawSpriteCharacter(ctx, rx, rFeetY, rStateSnap, p.username, rColors);
             if (p.avatar?.hairStyle && p.avatar.hairStyle !== 'none') {
               const SIT_HAIR_Y_ADJUST = 12;
@@ -1470,7 +1498,7 @@ if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
                 rStateSnap.frame,
               );
             }
-            if (p.avatar?.accessory && p.avatar.accessory !== 'none') {
+            if (!rDancing && p.avatar?.accessory && p.avatar.accessory !== 'none') {
               const SIT_ACCESSORY_Y_ADJUST = 12;
               const isSitting = rStateSnap.animKey === 'sit' || rStateSnap.animKey === 'sit_loop';
               const accessoryFeetY = rFeetY + (isSitting ? SIT_ACCESSORY_Y_ADJUST : 0);
