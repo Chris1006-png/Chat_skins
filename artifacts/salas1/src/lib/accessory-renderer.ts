@@ -16,6 +16,18 @@ export const ACCESSORY_STYLE_LABELS: Record<string, string> = {
   none: 'Sin accesorio',
 };
 
+export const ACCESSORY_COLORS: readonly string[] = [
+  '#A9F0F0',
+  '#5BC0EB',
+  '#7B61FF',
+  '#F06AA7',
+  '#7BD88F',
+  '#F5B942',
+  '#F2F2F2',
+];
+
+export const DEFAULT_ACCESSORY_COLOR = ACCESSORY_COLORS[0];
+
 type AccessoryAnimation = 'idle' | 'walk';
 
 type SheetConfig = {
@@ -63,6 +75,7 @@ const ACCESSORY_BOUNDS: ReadonlyArray<readonly [number, number, number, number] 
 
 const sheetCache = new Map<AccessoryAnimation, HTMLImageElement>();
 const maskCache = new Map<string, HTMLCanvasElement>();
+const tintedMaskCache = new Map<string, HTMLCanvasElement>();
 
 function getSheet(animation: AccessoryAnimation): HTMLImageElement {
   let image = sheetCache.get(animation);
@@ -237,6 +250,66 @@ function getMask(
   return canvas;
 }
 
+function parseHexColor(color: string): [number, number, number] {
+  const match = color.trim().match(/^#([0-9a-f]{6})$/i);
+  if (!match) return [169, 240, 240];
+  return [
+    Number.parseInt(match[1].slice(0, 2), 16),
+    Number.parseInt(match[1].slice(2, 4), 16),
+    Number.parseInt(match[1].slice(4, 6), 16),
+  ];
+}
+
+function getTintedMask(
+  animation: AccessoryAnimation,
+  row: number,
+  frame: number,
+  color: string,
+): HTMLCanvasElement | null {
+  const config = SHEETS[animation];
+  const safeRow = Math.max(0, Math.min(4, Math.round(row)));
+  const safeFrame = resolveFrame(animation, frame);
+  const key = `${animation}:${safeRow}:${safeFrame}:${color}`;
+  const cached = tintedMaskCache.get(key);
+  if (cached) return cached;
+
+  const mask = getMask(animation, safeRow, safeFrame);
+  if (!mask) return null;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = SHEET_WIDTH;
+  canvas.height = config.cellHeight;
+  const context = canvas.getContext('2d');
+  if (!context) return null;
+
+  context.imageSmoothingEnabled = false;
+  context.drawImage(mask, 0, 0);
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+  const [targetRed, targetGreen, targetBlue] = parseHexColor(color);
+
+  // Recolour only the cyan/teal shell of the visor. The dark frame, purple
+  // lenses and small highlights stay untouched so each colour keeps the
+  // original accessory's depth and details.
+  for (let index = 0; index < pixels.data.length; index += 4) {
+    if (pixels.data[index + 3] === 0) continue;
+    const red = pixels.data[index];
+    const green = pixels.data[index + 1];
+    const blue = pixels.data[index + 2];
+    const isVisorShell = green >= red + 12 && blue >= red + 12;
+    if (!isVisorShell) continue;
+
+    const luminance = red * 0.299 + green * 0.587 + blue * 0.114;
+    const shade = Math.max(0.68, Math.min(1.18, luminance / 220));
+    pixels.data[index] = Math.min(255, Math.round(targetRed * shade));
+    pixels.data[index + 1] = Math.min(255, Math.round(targetGreen * shade));
+    pixels.data[index + 2] = Math.min(255, Math.round(targetBlue * shade));
+  }
+
+  context.putImageData(pixels, 0, 0);
+  tintedMaskCache.set(key, canvas);
+  return canvas;
+}
+
 function drawSheetCrop(
   context: CanvasRenderingContext2D,
   feetX: number,
@@ -245,12 +318,13 @@ function drawSheetCrop(
   flip: boolean,
   animation: AccessoryAnimation,
   frame: number,
+  color: string,
 ): boolean {
   const config = SHEETS[animation];
   const bounds = ACCESSORY_BOUNDS[Math.max(0, Math.min(4, Math.round(row)))];
   if (!bounds) return true;
 
-  const mask = getMask(animation, row, frame);
+  const mask = getTintedMask(animation, row, frame, color);
   if (!mask) return false;
 
   const [sourceX, sourceY, sourceWidth, sourceHeight] = bounds;
@@ -289,10 +363,11 @@ export function drawAccessoryLayer(
   accessory: string | null | undefined,
   animation = 'idle',
   frame = 0,
+  accessoryColor = DEFAULT_ACCESSORY_COLOR,
 ): void {
   if (!accessory || accessory === 'none') return;
   const resolvedAnimation: AccessoryAnimation = animation === 'walk' ? 'walk' : 'idle';
-  drawSheetCrop(context, feetX, feetY, row, flip, resolvedAnimation, frame);
+  drawSheetCrop(context, feetX, feetY, row, flip, resolvedAnimation, frame, accessoryColor);
 }
 
 /**
@@ -303,10 +378,11 @@ export function drawAccessoryThumbnail(
   context: CanvasRenderingContext2D,
   size: number,
   accessory: string,
+  accessoryColor = DEFAULT_ACCESSORY_COLOR,
 ): boolean {
   if (accessory === 'none') return true;
 
-  const mask = getMask('idle', 0, 0);
+  const mask = getTintedMask('idle', 0, 0, accessoryColor);
   if (!mask) return false;
 
   const bounds = ACCESSORY_BOUNDS[0];

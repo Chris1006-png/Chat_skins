@@ -6,6 +6,9 @@ import { requireAuth, type AuthRequest } from "../lib/auth";
 
 const router = Router();
 
+const ACCESSORY_COLORS = ["#A9F0F0", "#5BC0EB", "#7B61FF", "#F06AA7", "#7BD88F", "#F5B942", "#F2F2F2"];
+const DEFAULT_ACCESSORY_COLOR = ACCESSORY_COLORS[0];
+
 const AVATAR_OPTIONS = {
   skinColors: ["#FDDBB4", "#F1C27D", "#E0AC69", "#C68642", "#8D5524", "#4A2912"],
   hairColors: [
@@ -21,6 +24,7 @@ const AVATAR_OPTIONS = {
   pantColors: ["#2C3E50", "#6E2C00", "#1A5276", "#145A32", "#512E5F", "#17202A", "#7B7D7D", "#F0E6CA"],
   hatStyles: ["none", "cap", "sombrero", "straw", "cowboy", "beanie"],
   accessories: ["none", "vr-goggles"],
+  accessoryColors: ACCESSORY_COLORS,
 };
 
 router.get("/avatar", requireAuth as any, async (req: AuthRequest, res) => {
@@ -35,7 +39,7 @@ router.get("/avatar", requireAuth as any, async (req: AuthRequest, res) => {
 
 router.post("/avatar", requireAuth as any, async (req: AuthRequest, res) => {
   const playerId = req.player!.id;
-  const { skinColor, hairColor, hairStyle, shirtColor, pantsColor, hatStyle, accessory } = req.body as {
+  const { skinColor, hairColor, hairStyle, shirtColor, pantsColor, hatStyle, accessory, accessoryColor } = req.body as {
     skinColor?: string;
     hairColor?: string;
     hairStyle?: string;
@@ -43,6 +47,7 @@ router.post("/avatar", requireAuth as any, async (req: AuthRequest, res) => {
     pantsColor?: string;
     hatStyle?: string | null;
     accessory?: string | null;
+    accessoryColor?: string | null;
   };
 
   if (!skinColor || !hairColor || !hairStyle || !shirtColor || !pantsColor) {
@@ -55,14 +60,33 @@ router.post("/avatar", requireAuth as any, async (req: AuthRequest, res) => {
   if (existing.length) {
     const [updated] = await db
       .update(avatarsTable)
-      .set({ skinColor, hairColor, hairStyle, shirtColor, pantsColor, hatStyle: hatStyle ?? null, accessory: accessory ?? null })
+      .set({
+        skinColor,
+        hairColor,
+        hairStyle,
+        shirtColor,
+        pantsColor,
+        hatStyle: hatStyle ?? null,
+        accessory: accessory ?? null,
+        accessoryColor: accessoryColor ?? DEFAULT_ACCESSORY_COLOR,
+      })
       .where(eq(avatarsTable.playerId, playerId))
       .returning();
     res.json(updated);
   } else {
     const [created] = await db
       .insert(avatarsTable)
-      .values({ playerId, skinColor, hairColor, hairStyle, shirtColor, pantsColor, hatStyle: hatStyle ?? null, accessory: accessory ?? null })
+      .values({
+        playerId,
+        skinColor,
+        hairColor,
+        hairStyle,
+        shirtColor,
+        pantsColor,
+        hatStyle: hatStyle ?? null,
+        accessory: accessory ?? null,
+        accessoryColor: accessoryColor ?? DEFAULT_ACCESSORY_COLOR,
+      })
       .returning();
     res.json(created);
   }

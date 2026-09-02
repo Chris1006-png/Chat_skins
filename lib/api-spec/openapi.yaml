@@ -349,6 +349,8 @@ components:
           type: ["string", "null"]
         accessory:
           type: ["string", "null"]
+        accessoryColor:
+          type: string
       required:
         - id
         - playerId
@@ -359,6 +361,7 @@ components:
         - pantsColor
         - hatStyle
         - accessory
+        - accessoryColor
 
     AvatarInput:
       type: object
@@ -377,6 +380,8 @@ components:
           type: ["string", "null"]
         accessory:
           type: ["string", "null"]
+        accessoryColor:
+          type: string
       required:
         - skinColor
         - hairColor
@@ -415,6 +420,10 @@ components:
           type: array
           items:
             type: string
+        accessoryColors:
+          type: array
+          items:
+            type: string
       required:
         - skinColors
         - hairColors
@@ -423,6 +432,7 @@ components:
         - pantColors
         - hatStyles
         - accessories
+        - accessoryColors
 
     Player:
       type: object

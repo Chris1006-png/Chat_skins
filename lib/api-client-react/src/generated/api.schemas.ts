@@ -21,6 +21,7 @@ export interface Avatar {
   hatStyle: string | null;
   /** @nullable */
   accessory: string | null;
+  accessoryColor: string;
 }
 
 export interface AvatarInput {
@@ -33,6 +34,7 @@ export interface AvatarInput {
   hatStyle?: string | null;
   /** @nullable */
   accessory?: string | null;
+  accessoryColor?: string;
 }
 
 export interface AvatarOptions {
@@ -43,6 +45,7 @@ export interface AvatarOptions {
   pantColors: string[];
   hatStyles: string[];
   accessories: string[];
+  accessoryColors: string[];
 }
 
 export interface Player {

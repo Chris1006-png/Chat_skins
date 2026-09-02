@@ -14,4 +14,5 @@ export interface AvatarOptions {
   pantColors: string[];
   hatStyles: string[];
   accessories: string[];
+  accessoryColors: string[];
 }

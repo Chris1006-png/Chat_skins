@@ -21,6 +21,7 @@ export const avatarsTable = pgTable("avatars", {
   pantsColor: text("pants_color").notNull(),
   hatStyle: text("hat_style"),
   accessory: text("accessory"),
+  accessoryColor: text("accessory_color").default("#A9F0F0").notNull(),
 });
 
 export const playerPositionsTable = pgTable("player_positions", {

@@ -38,6 +38,7 @@ interface AvatarSnapshot {
   pantsColor: string;
   hatStyle: string | null;
   accessory: string | null;
+  accessoryColor: string;
 }
 
 const clients = new Map<number, GameClient>();

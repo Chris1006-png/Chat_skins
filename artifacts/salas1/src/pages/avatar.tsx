@@ -33,8 +33,10 @@ import {
   HAIR_STYLE_LABELS,
 } from '@/lib/hair-renderer';
 import {
+  ACCESSORY_COLORS,
   ACCESSORY_STYLES,
   ACCESSORY_STYLE_LABELS,
+  DEFAULT_ACCESSORY_COLOR,
   drawAccessoryThumbnail,
 } from '@/lib/accessory-renderer';
 
@@ -156,7 +158,13 @@ function HairThumbnail({
   );
 }
 
-function AccessoryThumbnail({ accessory }: { accessory: string }) {
+function AccessoryThumbnail({
+  accessory,
+  accessoryColor,
+}: {
+  accessory: string;
+  accessoryColor: string;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -168,12 +176,12 @@ function AccessoryThumbnail({ accessory }: { accessory: string }) {
 
     let frameId = 0;
     const draw = () => {
-      const ready = drawAccessoryThumbnail(context, canvas.width, accessory);
+      const ready = drawAccessoryThumbnail(context, canvas.width, accessory, accessoryColor);
       if (!ready) frameId = requestAnimationFrame(draw);
     };
     draw();
     return () => cancelAnimationFrame(frameId);
-  }, [accessory]);
+  }, [accessory, accessoryColor]);
 
   return (
     <canvas
@@ -244,6 +252,7 @@ export default function AvatarCreator() {
   const [shirtColor, setShirtColor] = useState(DEFAULT_SHIRT_COLORS[0]);
   const [pantsColor, setPantsColor] = useState(DEFAULT_PANTS_COLORS[0]);
   const [accessory, setAccessory] = useState('none');
+  const [accessoryColor, setAccessoryColor] = useState(DEFAULT_ACCESSORY_COLOR);
 
   useEffect(() => {
     if (!token) {
@@ -259,12 +268,14 @@ export default function AvatarCreator() {
     setShirtColor(existingAvatar.shirtColor);
     setPantsColor(existingAvatar.pantsColor);
     setAccessory(existingAvatar.accessory || 'none');
+    setAccessoryColor(existingAvatar.accessoryColor || DEFAULT_ACCESSORY_COLOR);
   }, [existingAvatar?.playerId]);
 
   useEffect(() => {
     if (!options || existingAvatar) return;
     if (options.skinColors?.length) setSkinColor(options.skinColors[0]);
     if (options.shirtColors?.length) setShirtColor(options.shirtColors[0]);
+    if (options.accessoryColors?.length) setAccessoryColor(options.accessoryColors[0]);
   }, [existingAvatar, options]);
 
   const saveMutation = useSaveAvatar({
@@ -282,6 +293,7 @@ export default function AvatarCreator() {
   const hairColors = DEFAULT_HAIR_COLORS;
   const hairStyles = options?.hairStyles?.length ? options.hairStyles : HAIR_STYLES;
   const accessories = options?.accessories?.length ? options.accessories : ACCESSORY_STYLES;
+  const accessoryColors = options?.accessoryColors?.length ? options.accessoryColors : ACCESSORY_COLORS;
   const shirtColors = options?.shirtColors?.length ? options.shirtColors : DEFAULT_SHIRT_COLORS;
   // Clothing sprites are not available yet, so clothing colors stay tied to
   // the body color until a garment is actually equipped.
@@ -309,6 +321,7 @@ export default function AvatarCreator() {
         pantsColor: hasPantsEquipped ? pantsColor : skinColor,
         hatStyle: null,
          accessory: accessory === 'none' ? null : accessory,
+         accessoryColor,
       },
     });
   };
@@ -388,7 +401,8 @@ export default function AvatarCreator() {
                 pantsColor={previewPantsColor}
                 hasClothing={hasShirtEquipped || hasPantsEquipped}
                 hairStyle={hairStyle}
-                 accessory={accessory}
+                accessory={accessory}
+                accessoryColor={accessoryColor}
                 facing={facing}
                 size={280}
               />
@@ -442,6 +456,26 @@ export default function AvatarCreator() {
                     />
                   ))}
                 </div>
+              </div>
+
+              <div className="wardrobe-color-group">
+                <span>ACCESORIO</span>
+                {accessory !== 'none' ? (
+                  <div className="wardrobe-swatches">
+                    {accessoryColors.map((color) => (
+                      <ColorSwatch
+                        key={color}
+                        color={color}
+                        selected={accessoryColor === color}
+                        onClick={() => setAccessoryColor(color)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="wardrobe-color-locked">
+                    Selecciona un accesorio para cambiar su color
+                  </p>
+                )}
               </div>
 
               <div className="wardrobe-color-group">
@@ -557,7 +591,7 @@ export default function AvatarCreator() {
                         onClick={() => setAccessory(item)}
                       >
                         <span className="wardrobe-item-preview">
-                          <AccessoryThumbnail accessory={item} />
+                           <AccessoryThumbnail accessory={item} accessoryColor={accessoryColor} />
                         </span>
                         <span className="wardrobe-item-name">
                           {ACCESSORY_STYLE_LABELS[item] ?? item}

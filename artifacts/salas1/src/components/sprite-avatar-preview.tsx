@@ -40,6 +40,8 @@ export interface SpriteAvatarPreviewProps {
   hairStyle?:  string;
   /** Accessory key from the wardrobe catalog. */
   accessory?:   string | null;
+  /** Main visor colour for the selected accessory. */
+  accessoryColor?: string;
   /**
    * Facing index 0-7 (S, SE, E, NE, N, NW, W, SW).
    * Default: 0 (front / S).
@@ -52,7 +54,7 @@ export interface SpriteAvatarPreviewProps {
 export function SpriteAvatarPreview({
   skinColor, hairColor, shirtColor, pantsColor,
   hasClothing = false,
-  hairStyle, accessory, facing, size = 180,
+  hairStyle, accessory, accessoryColor, facing, size = 180,
 }: SpriteAvatarPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -66,6 +68,7 @@ export function SpriteAvatarPreview({
     hasClothing,
     hairStyle: hairStyle ?? '',
     accessory: accessory ?? null,
+    accessoryColor,
     facing: facing ?? 0,
   });
   propsRef.current = {
@@ -76,6 +79,7 @@ export function SpriteAvatarPreview({
     hasClothing,
     hairStyle: hairStyle ?? '',
     accessory: accessory ?? null,
+    accessoryColor,
     facing: facing ?? 0,
   };
 
@@ -119,7 +123,7 @@ export function SpriteAvatarPreview({
       const {
         skinColor, hairColor, shirtColor, pantsColor,
         hasClothing,
-        hairStyle: hStyle, accessory: accessoryStyle, facing: f,
+        hairStyle: hStyle, accessory: accessoryStyle, accessoryColor: aColor, facing: f,
       } = propsRef.current;
 
       const { row, flip } = FACING_MAP[(f ?? 0) % 8];
@@ -199,7 +203,7 @@ export function SpriteAvatarPreview({
         ctx.translate(feetX, feetY);
         ctx.scale(accessoryScale, accessoryScale);
         ctx.translate(-feetX, -feetY);
-        drawAccessoryLayer(ctx, feetX, feetY, row, flip, accessoryStyle, 'idle', frame);
+          drawAccessoryLayer(ctx, feetX, feetY, row, flip, accessoryStyle, 'idle', frame, aColor);
         ctx.restore();
       }
 

@@ -1350,6 +1350,7 @@ if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
                lAvatar.accessory,
                lStateSnap.animKey,
                lStateSnap.frame,
+                lAvatar.accessoryColor,
              );
            }
         },
@@ -1482,6 +1483,7 @@ if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
                 p.avatar.accessory,
                 rStateSnap.animKey,
                 rStateSnap.frame,
+                p.avatar.accessoryColor,
               );
             }
           },

@@ -17,6 +17,7 @@ router.get("/players/online", async (_req, res) => {
       pantsColor: avatarsTable.pantsColor,
       hatStyle: avatarsTable.hatStyle,
       accessory: avatarsTable.accessory,
+       accessoryColor: avatarsTable.accessoryColor,
       posX: playerPositionsTable.posX,
       posY: playerPositionsTable.posY,
     })
@@ -39,6 +40,7 @@ router.get("/players/online", async (_req, res) => {
           pantsColor: p.pantsColor!,
           hatStyle: p.hatStyle ?? null,
           accessory: p.accessory ?? null,
+           accessoryColor: p.accessoryColor,
         }
       : undefined,
     posX: p.posX ?? null,

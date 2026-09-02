@@ -18,4 +18,5 @@ export interface Avatar {
   hatStyle: string | null;
   /** @nullable */
   accessory: string | null;
+  accessoryColor: string;
 }
