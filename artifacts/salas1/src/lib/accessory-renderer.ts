@@ -260,6 +260,67 @@ function parseHexColor(color: string): [number, number, number] {
   ];
 }
 
+function drawSolidVisorBase(
+  context: CanvasRenderingContext2D,
+  row: number,
+  color: string,
+): void {
+  context.save();
+  context.fillStyle = color;
+  context.beginPath();
+
+  switch (Math.max(0, Math.min(4, Math.round(row)))) {
+    case 0:
+      // Front view: a rounded visor with a shallow dip around the nose.
+      context.moveTo(153, 178);
+      context.lineTo(300, 178);
+      context.quadraticCurveTo(315, 180, 316, 194);
+      context.lineTo(316, 239);
+      context.quadraticCurveTo(315, 254, 299, 257);
+      context.lineTo(247, 252);
+      context.quadraticCurveTo(230, 249, 215, 253);
+      context.lineTo(159, 258);
+      context.quadraticCurveTo(143, 255, 142, 240);
+      context.lineTo(142, 198);
+      context.quadraticCurveTo(143, 182, 153, 178);
+      break;
+    case 1:
+      // Three-quarter view: the visor is angled down toward the back.
+      context.moveTo(151, 175);
+      context.lineTo(276, 211);
+      context.quadraticCurveTo(291, 216, 292, 229);
+      context.lineTo(279, 258);
+      context.quadraticCurveTo(273, 271, 259, 269);
+      context.lineTo(224, 253);
+      context.quadraticCurveTo(209, 246, 194, 247);
+      context.lineTo(153, 231);
+      context.quadraticCurveTo(138, 225, 138, 212);
+      context.lineTo(144, 185);
+      context.quadraticCurveTo(146, 178, 151, 175);
+      break;
+    case 2:
+      // Side view: only the short front-facing visor plate is visible.
+      context.moveTo(151, 187);
+      context.lineTo(235, 187);
+      context.quadraticCurveTo(248, 189, 249, 201);
+      context.lineTo(248, 239);
+      context.quadraticCurveTo(247, 252, 235, 254);
+      context.lineTo(207, 251);
+      context.quadraticCurveTo(194, 248, 183, 246);
+      context.lineTo(153, 241);
+      context.quadraticCurveTo(146, 237, 146, 228);
+      context.lineTo(146, 199);
+      context.quadraticCurveTo(146, 190, 151, 187);
+      break;
+    default:
+      break;
+  }
+
+  context.closePath();
+  context.fill();
+  context.restore();
+}
+
 function getTintedMask(
   animation: AccessoryAnimation,
   row: number,
@@ -283,19 +344,26 @@ function getTintedMask(
   if (!context) return null;
 
   context.imageSmoothingEnabled = false;
+  drawSolidVisorBase(context, safeRow, color);
   context.drawImage(mask, 0, 0);
   const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
   const [targetRed, targetGreen, targetBlue] = parseHexColor(color);
 
-  // Recolour only the cyan/teal shell of the visor. The dark frame, purple
-  // lenses and small highlights stay untouched so each colour keeps the
-  // original accessory's depth and details.
+  // Recolour the whole light visor shell, not only its cyan source pixels.
+  // The solid base above closes the white gaps between the original pixel
+  // details. Keep the dark frame and purple lenses untouched.
   for (let index = 0; index < pixels.data.length; index += 4) {
     if (pixels.data[index + 3] === 0) continue;
     const red = pixels.data[index];
     const green = pixels.data[index + 1];
     const blue = pixels.data[index + 2];
-    const isVisorShell = green >= red + 12 && blue >= red + 12;
+    const isDarkFrame = red < 100 && green < 55 && blue < 100;
+    const isPurpleLens = green < red - 18 && blue > green + 18;
+    const isVisorShell =
+      !isDarkFrame &&
+      !isPurpleLens &&
+      green >= red - 12 &&
+      blue >= red - 12;
     if (!isVisorShell) continue;
 
     const luminance = red * 0.299 + green * 0.587 + blue * 0.114;
