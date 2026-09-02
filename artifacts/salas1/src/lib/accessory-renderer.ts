@@ -2,8 +2,8 @@
  * FarmCity — Layered accessory renderer
  *
  * The uploaded accessory sheets contain the character on a white background.
- * We keep only the non-white pixels inside the head-mounted accessory bounds,
- * then draw that layer on top of the body and hair sprites.
+ * We keep only the pixels that belong to the head-mounted accessory inside
+ * its bounds, then draw that layer on top of the body and hair sprites.
  */
 
 import idleAccessorySheetUrl from '@assets/9_sin_título_Restaurado_20260901161013_1788301128227.png';
@@ -29,6 +29,9 @@ const SHEET_WIDTH = 460;
 const SHEET_SCALE = 0.20;
 const SHEET_FOOT_Y = 430;
 const ACCESSORY_MASK_RADIUS = 9;
+const SHEET_BACKGROUND_THRESHOLD = 235;
+const SOFT_BACKGROUND_THRESHOLD = 220;
+const SOFT_BACKGROUND_MAX_SPREAD = 14;
 
 const SHEETS: Record<AccessoryAnimation, SheetConfig> = {
   idle: {
@@ -99,6 +102,7 @@ function getMask(
   if (!context) return null;
 
   context.imageSmoothingEnabled = false;
+  context.clearRect(0, 0, canvas.width, canvas.height);
   context.drawImage(
     image,
     safeFrame * SHEET_WIDTH,
@@ -131,6 +135,15 @@ function getMask(
         x < boundX + boundWidth &&
         y >= boundY &&
         y < boundY + boundHeight;
+
+      if (!insideBounds) {
+        const index = (y * canvas.width + x) * 4;
+        pixels.data[index] = 0;
+        pixels.data[index + 1] = 0;
+        pixels.data[index + 2] = 0;
+        pixels.data[index + 3] = 0;
+        continue;
+      }
 
       const red = pixels.data[index];
       const green = pixels.data[index + 1];
@@ -183,24 +196,39 @@ function getMask(
         continue;
       }
 
-      const brightness =
-        (pixels.data[index] + pixels.data[index + 1] + pixels.data[index + 2]) / 3;
+      const red = pixels.data[index];
+      const green = pixels.data[index + 1];
+      const blue = pixels.data[index + 2];
       const isCharacterOutline =
-        pixels.data[index] < 100 &&
-        pixels.data[index + 1] < 55 &&
-        pixels.data[index + 2] < 100;
-      // The sheet background is slightly off-white (#FEFEFF). Any nearly
-      // white pixel must be fully transparent; even a tiny alpha would reveal
-      // the rectangular crop against the dark plaza background.
+        red < 100 &&
+        green < 55 &&
+        blue < 100;
+      const channelSpread = Math.max(red, green, blue) - Math.min(red, green, blue);
+      // These sheets are RGB PNGs with a #FFFEFF matte, not transparent art.
+      // Never derive alpha from brightness: doing so leaves a low-alpha
+      // rectangle wherever the matte is slightly darker after resampling.
       const isSheetBackground =
-        pixels.data[index] >= 245 &&
-        pixels.data[index + 1] >= 245 &&
-        pixels.data[index + 2] >= 245;
-      pixels.data[index + 3] = isSheetBackground
-        ? 0
-        : isCharacterOutline
-          ? 0
-        : Math.max(0, Math.min(255, (255 - brightness) * 4));
+        red >= SHEET_BACKGROUND_THRESHOLD &&
+        green >= SHEET_BACKGROUND_THRESHOLD &&
+        blue >= SHEET_BACKGROUND_THRESHOLD;
+      // Remove the pale anti-aliased fringe of the matte too, while retaining
+      // chromatic visor highlights and the gray accessory frame.
+      const isSoftBackground =
+        red >= SOFT_BACKGROUND_THRESHOLD &&
+        green >= SOFT_BACKGROUND_THRESHOLD &&
+        blue >= SOFT_BACKGROUND_THRESHOLD &&
+        channelSpread <= SOFT_BACKGROUND_MAX_SPREAD;
+      const shouldClear = isSheetBackground || isSoftBackground || isCharacterOutline;
+      if (shouldClear) {
+        // Also clear RGB, not only alpha. Transparent white RGB can bleed into
+        // the edge when this canvas is transformed or composited by the GPU.
+        pixels.data[index] = 0;
+        pixels.data[index + 1] = 0;
+        pixels.data[index + 2] = 0;
+        pixels.data[index + 3] = 0;
+      } else {
+        pixels.data[index + 3] = 255;
+      }
     }
   }
 
