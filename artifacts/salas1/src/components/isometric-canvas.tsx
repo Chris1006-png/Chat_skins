@@ -195,6 +195,16 @@ function determineLocalAnim(
 }
 
 /** Draw a character using the sprite sheet system */
+type SpriteDrawOptions = {
+  clip?: (
+    context: CanvasRenderingContext2D,
+    dx: number,
+    dy: number,
+    scale: number,
+  ) => void;
+  drawName?: boolean;
+};
+
 function drawSpriteCharacter(
   ctx: CanvasRenderingContext2D,
   sx: number,          // feet center X (in camera space)
@@ -202,6 +212,7 @@ function drawSpriteCharacter(
   state: CharAnimState,
   name: string,
   colors?: AvatarColors,
+  options: SpriteDrawOptions = {},
 ): void {
   const def = ANIM_DEFS[state.animKey];
   if (!def) return;
@@ -222,6 +233,7 @@ function drawSpriteCharacter(
     ctx.scale(-1, 1);
     ctx.translate(-sx, 0);
   }
+  options.clip?.(ctx, dx, dy, CHAR_SCALE);
 
   if (colors) {
     // ── Color tinting via off-screen canvas ────────────────────────────────
@@ -284,6 +296,8 @@ function drawSpriteCharacter(
 
   ctx.restore();
 
+  if (options.drawName === false) return;
+
   // Name tag above head (head top ≈ y=50 in raw frame)
   const headTopY = dy + 50 * CHAR_SCALE;
   ctx.save();
@@ -296,6 +310,81 @@ function drawSpriteCharacter(
   ctx.fillStyle = '#fff';
   ctx.fillText(name, sx, headTopY);
   ctx.restore();
+}
+
+function clipDanceHands(
+  context: CanvasRenderingContext2D,
+  dx: number,
+  dy: number,
+  scale: number,
+  row: number,
+): void {
+  const polygon = (points: ReadonlyArray<readonly [number, number]>) => {
+    context.moveTo(dx + points[0][0] * scale, dy + points[0][1] * scale);
+    for (const [x, y] of points.slice(1)) {
+      context.lineTo(dx + x * scale, dy + y * scale);
+    }
+    context.closePath();
+  };
+
+  context.beginPath();
+  switch (row) {
+    case 0:
+      // Front dance frames 2/3: the raised arms cross the visor at both sides.
+      polygon([
+        [181, 199], [197, 174], [218, 173], [205, 218],
+        [198, 274], [178, 274], [184, 232],
+      ]);
+      polygon([
+        [242, 173], [263, 174], [279, 199], [276, 232],
+        [282, 274], [262, 274], [255, 218],
+      ]);
+      break;
+    case 1:
+      // Diagonal view: the visible raised arm runs across the visor side.
+      polygon([
+        [164, 190], [185, 168], [216, 176], [232, 220],
+        [211, 274], [190, 274], [195, 232],
+      ]);
+      polygon([
+        [224, 175], [248, 186], [273, 224], [277, 270],
+        [255, 274], [244, 222],
+      ]);
+      break;
+    case 2:
+      // Profile view: one raised arm crosses diagonally in front.
+      polygon([
+        [151, 181], [171, 169], [239, 231], [233, 273],
+        [211, 273], [205, 248], [143, 210],
+      ]);
+      break;
+    default:
+      break;
+  }
+  context.clip();
+}
+
+function drawDanceHandsOverlay(
+  context: CanvasRenderingContext2D,
+  sx: number,
+  sy: number,
+  state: CharAnimState,
+  colors?: AvatarColors,
+): void {
+  if (
+    state.animKey !== 'swing' ||
+    (state.frame !== 2 && state.frame !== 3) ||
+    state.row > 2
+  ) {
+    return;
+  }
+
+  drawSpriteCharacter(context, sx, sy, state, '', colors, {
+    drawName: false,
+    clip: (clipContext, dx, dy, scale) => {
+      clipDanceHands(clipContext, dx, dy, scale, state.row);
+    },
+  });
 }
 
 // ─── Coordinate helpers ───────────────────────────────────────────────────────
@@ -1320,20 +1409,7 @@ export function IsometricCanvas({
         depth: posRef.current.x + posRef.current.y,
         draw: () => {
           const lFeetY = lsy + TILE_H / 2;
-           if (lDancing && lAvatar?.accessory && lAvatar.accessory !== 'none') {
-             drawAccessoryLayer(
-               ctx,
-               lsx,
-               lFeetY,
-               lStateSnap.row,
-               lStateSnap.flip,
-               lAvatar.accessory,
-               lStateSnap.animKey,
-               lStateSnap.frame,
-               lAvatar.accessoryColor,
-             );
-           }
-drawSpriteCharacter(ctx, lsx, lFeetY, lStateSnap, 'Tú', lColors);
+          drawSpriteCharacter(ctx, lsx, lFeetY, lStateSnap, 'Tú', lColors);
 if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
   const SIT_HAIR_Y_ADJUST = 12; // ajustar este número según pruebas
   const isSitting = lStateSnap.animKey === 'sit' || lStateSnap.animKey === 'sit_loop';
@@ -1351,7 +1427,7 @@ if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
     lStateSnap.frame,
   );
           }
-            if (!lDancing && lAvatar?.accessory && lAvatar.accessory !== 'none') {
+            if (lAvatar?.accessory && lAvatar.accessory !== 'none') {
              const SIT_ACCESSORY_Y_ADJUST = 12;
              const isSitting = lStateSnap.animKey === 'sit' || lStateSnap.animKey === 'sit_loop';
              const accessoryFeetY = lFeetY + (isSitting ? SIT_ACCESSORY_Y_ADJUST : 0);
@@ -1367,6 +1443,9 @@ if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
                 lAvatar.accessoryColor,
              );
            }
+            if (lDancing) {
+              drawDanceHandsOverlay(ctx, lsx, lFeetY, lStateSnap, lColors);
+            }
         },
       });
 
@@ -1467,19 +1546,6 @@ if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
           depth,
           draw: () => {
             const rFeetY = ry + TILE_H / 2;
-             if (rDancing && p.avatar?.accessory && p.avatar.accessory !== 'none') {
-               drawAccessoryLayer(
-                 ctx,
-                 rx,
-                 rFeetY,
-                 rStateSnap.row,
-                 rStateSnap.flip,
-                 p.avatar.accessory,
-                 rStateSnap.animKey,
-                 rStateSnap.frame,
-                 p.avatar.accessoryColor,
-               );
-             }
             drawSpriteCharacter(ctx, rx, rFeetY, rStateSnap, p.username, rColors);
             if (p.avatar?.hairStyle && p.avatar.hairStyle !== 'none') {
               const SIT_HAIR_Y_ADJUST = 12;
@@ -1498,7 +1564,7 @@ if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
                 rStateSnap.frame,
               );
             }
-            if (!rDancing && p.avatar?.accessory && p.avatar.accessory !== 'none') {
+            if (p.avatar?.accessory && p.avatar.accessory !== 'none') {
               const SIT_ACCESSORY_Y_ADJUST = 12;
               const isSitting = rStateSnap.animKey === 'sit' || rStateSnap.animKey === 'sit_loop';
               const accessoryFeetY = rFeetY + (isSitting ? SIT_ACCESSORY_Y_ADJUST : 0);
@@ -1513,6 +1579,9 @@ if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
                 rStateSnap.frame,
                 p.avatar.accessoryColor,
               );
+            }
+            if (rDancing) {
+              drawDanceHandsOverlay(ctx, rx, rFeetY, rStateSnap, rColors);
             }
           },
         });
