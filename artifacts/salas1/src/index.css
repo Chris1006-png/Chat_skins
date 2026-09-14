@@ -729,6 +729,648 @@
   }
 }
 
+/* ── FarmCity own profile panel — compact western pixel UI ─────────────── */
+.farmcity-profile-panel {
+  --profile-ink: #2b160d;
+  --profile-deep: #3d2010;
+  --profile-wood: #6a3519;
+  --profile-wood-light: #8b4a22;
+  --profile-cream: #fff3d2;
+  --profile-paper: #f4ddb0;
+  --profile-gold: #efb52f;
+  --profile-gold-light: #ffd96a;
+  --profile-red: #b83b2d;
+  position: relative;
+  width: min(100%, 340px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  border: 4px solid var(--profile-ink);
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 214, 125, 0.035) 0 2px, transparent 2px 6px),
+    linear-gradient(135deg, #4e2412, #2f160c 52%, #562714);
+  color: var(--profile-cream);
+  box-shadow:
+    0 0 0 2px #9b5a2e,
+    0 7px 0 #1d0d07,
+    0 17px 28px rgba(10, 5, 2, 0.48);
+  font-family: 'VT323', monospace;
+  scrollbar-width: thin;
+  scrollbar-color: #b27431 #32170c;
+}
+
+.farmcity-profile-panel,
+.farmcity-profile-panel *,
+.farmcity-profile-panel *::before,
+.farmcity-profile-panel *::after {
+  box-sizing: border-box;
+}
+
+.farmcity-profile-panel button {
+  font: inherit;
+}
+
+.farmcity-profile-panel button:focus-visible {
+  outline: 3px solid var(--profile-gold-light);
+  outline-offset: 2px;
+}
+
+.farmcity-profile-panel__corner {
+  position: absolute;
+  z-index: 4;
+  width: 17px;
+  height: 17px;
+  border: 3px solid var(--profile-gold);
+  background: #733916;
+  pointer-events: none;
+}
+
+.farmcity-profile-panel__corner--tl {
+  top: -4px;
+  left: -4px;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.farmcity-profile-panel__corner--tr {
+  top: -4px;
+  right: -4px;
+  border-left: 0;
+  border-bottom: 0;
+}
+
+.farmcity-profile-panel__corner--bl {
+  bottom: -4px;
+  left: -4px;
+  border-right: 0;
+  border-top: 0;
+}
+
+.farmcity-profile-panel__corner--br {
+  right: -4px;
+  bottom: -4px;
+  border-left: 0;
+  border-top: 0;
+}
+
+.farmcity-profile-panel__rivet {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border: 1px solid #7d3d18;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff0a3 0 15%, #f5bd38 18% 50%, #9e5b15 55% 100%);
+  box-shadow: 1px 1px 0 rgba(24, 8, 2, 0.65);
+}
+
+.farmcity-profile-panel__header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 59px;
+  padding: 8px 9px 8px 16px;
+  border-bottom: 4px solid var(--profile-ink);
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 209, 114, 0.08) 0 2px, transparent 2px 18px),
+    linear-gradient(180deg, #78401f, #4b2312);
+}
+
+.farmcity-profile-panel__header::after {
+  position: absolute;
+  right: 8px;
+  bottom: -7px;
+  left: 8px;
+  height: 2px;
+  background: #bd762b;
+  content: '';
+}
+
+.farmcity-profile-panel__header-rivet {
+  position: absolute;
+  top: 10px;
+  left: 8px;
+}
+
+.farmcity-profile-panel__header-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding-left: 10px;
+  color: var(--profile-cream);
+  font-size: 25px;
+  line-height: 1;
+  letter-spacing: 0.09em;
+  text-shadow: 2px 2px 0 var(--profile-ink);
+}
+
+.farmcity-profile-panel__header-star {
+  color: var(--profile-gold-light);
+  font-size: 20px;
+  text-shadow: 1px 1px 0 #59200d;
+}
+
+.farmcity-profile-panel__brand {
+  white-space: nowrap;
+}
+
+.farmcity-profile-panel__back {
+  padding: 2px 0;
+  border: 0;
+  color: var(--profile-cream);
+  background: transparent;
+  cursor: pointer;
+  font-size: 19px;
+  letter-spacing: 0.03em;
+}
+
+.farmcity-profile-panel__back:hover {
+  color: var(--profile-gold-light);
+}
+
+.farmcity-profile-panel__subview-title {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+}
+
+.farmcity-profile-panel__subview-title > span {
+  overflow: hidden;
+  color: var(--profile-cream);
+  font-size: 21px;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.farmcity-profile-panel__close-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 3px solid #1e0b05;
+  border-radius: 2px;
+  color: var(--profile-cream);
+  background: linear-gradient(145deg, #8d4a21, #4d2212);
+  box-shadow: inset 0 0 0 2px #c17a31, 2px 2px 0 rgba(23, 7, 2, 0.45);
+  cursor: pointer;
+  font-family: Georgia, serif;
+  font-size: 29px;
+  line-height: 25px;
+}
+
+.farmcity-profile-panel__close-icon:hover {
+  color: var(--profile-gold-light);
+  background: #9c5124;
+}
+
+.farmcity-profile-panel__identity {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 121px;
+  padding: 14px 13px 12px;
+  border-bottom: 3px solid #2a1209;
+  background:
+    linear-gradient(90deg, rgba(255, 219, 141, 0.04), transparent 38%),
+    #542914;
+}
+
+.farmcity-profile-panel__identity::before,
+.farmcity-profile-panel__stats::before {
+  position: absolute;
+  top: 7px;
+  left: 8px;
+  width: 12px;
+  height: 12px;
+  border-top: 2px solid #c0782d;
+  border-left: 2px solid #c0782d;
+  content: '';
+  opacity: 0.9;
+}
+
+.farmcity-profile-panel__avatar-frame {
+  display: grid;
+  flex: 0 0 auto;
+  width: 83px;
+  height: 83px;
+  place-items: center;
+  border: 4px solid #251006;
+  background: #b0d989;
+  box-shadow: inset 0 0 0 3px #d58b2b, 3px 3px 0 rgba(20, 7, 2, 0.45);
+}
+
+.farmcity-profile-panel__avatar-stage {
+  display: grid;
+  width: 65px;
+  height: 65px;
+  place-items: center;
+  background:
+    linear-gradient(45deg, rgba(255,255,255,0.11) 25%, transparent 25% 75%, rgba(255,255,255,0.11) 75%),
+    #b9e09b;
+  background-size: 8px 8px;
+}
+
+.farmcity-profile-panel__avatar {
+  image-rendering: pixelated;
+  shape-rendering: crispEdges;
+}
+
+.farmcity-profile-panel__identity-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  color: var(--profile-cream);
+  font-size: 18px;
+  line-height: 1.05;
+}
+
+.farmcity-profile-panel__identity-copy strong {
+  overflow: hidden;
+  color: #fff1cf;
+  font-size: 22px;
+  letter-spacing: 0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.farmcity-profile-panel__identity-copy b {
+  color: var(--profile-gold-light);
+  font-size: 22px;
+}
+
+.farmcity-profile-panel__role {
+  color: var(--profile-gold);
+  font-size: 17px;
+}
+
+.farmcity-profile-panel__experience {
+  display: flex;
+  align-self: flex-start;
+  width: 70px;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--profile-gold-light);
+  font-size: 14px;
+  line-height: 1;
+  text-align: right;
+}
+
+.farmcity-profile-panel__experience .farmcity-profile-panel__bar {
+  width: 68px;
+  height: 11px;
+}
+
+.farmcity-profile-panel__experience b {
+  color: #e8c991;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.farmcity-profile-panel__bar {
+  position: relative;
+  height: 15px;
+  overflow: hidden;
+  border: 2px solid #1f0c06;
+  background: #27120a;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+}
+
+.farmcity-profile-panel__bar-fill {
+  height: 100%;
+  border-right: 2px solid rgba(97, 27, 8, 0.52);
+  box-shadow: inset 0 2px 0 rgba(255, 247, 165, 0.35);
+}
+
+.farmcity-profile-panel__stats {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 14px 13px 12px;
+  border-bottom: 3px solid #2a1209;
+  background: #3c1d10;
+}
+
+.farmcity-profile-panel__stat-row {
+  display: grid;
+  grid-template-columns: 23px 36px minmax(0, 1fr) 58px;
+  align-items: center;
+  gap: 5px;
+  color: var(--profile-cream);
+  font-size: 18px;
+}
+
+.farmcity-profile-panel__stat-icon {
+  font-size: 19px;
+}
+
+.farmcity-profile-panel__stat-label {
+  color: #f5ddb0;
+}
+
+.farmcity-profile-panel__stat-row b {
+  color: #f5ddb0;
+  font-size: 16px;
+  font-weight: 400;
+  text-align: right;
+}
+
+.farmcity-profile-panel__currency-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #f5ddb0;
+  font-size: 18px;
+}
+
+.farmcity-profile-panel__currency-row > div {
+  display: grid;
+  grid-template-columns: 23px auto 1fr;
+  align-items: center;
+  column-gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.farmcity-profile-panel__currency-row > div:last-child {
+  grid-template-columns: 25px auto 1fr;
+}
+
+.farmcity-profile-panel__currency-icon {
+  font-size: 19px;
+}
+
+.farmcity-profile-panel__currency-row b {
+  padding-left: 7px;
+  color: var(--profile-gold);
+  font-weight: 400;
+  text-align: right;
+}
+
+.farmcity-profile-panel__currency-row i {
+  width: 2px;
+  height: 23px;
+  background: #8e5025;
+}
+
+.farmcity-profile-panel__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  padding: 12px 11px 10px;
+  background: #35190d;
+}
+
+.farmcity-profile-panel__action {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  gap: 8px;
+  overflow: hidden;
+  padding: 5px 8px;
+  border: 3px solid #1d0b05;
+  color: #ffe9bd;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 211, 123, 0.035) 0 2px, transparent 2px 5px),
+    linear-gradient(180deg, #7b3e1d, #572812);
+  box-shadow: inset 0 0 0 2px #a35a29, 2px 2px 0 rgba(16, 5, 2, 0.42);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  text-align: left;
+  text-shadow: 1px 1px 0 #301107;
+  transition: transform 120ms ease, filter 120ms ease, background 120ms ease;
+}
+
+.farmcity-profile-panel__action:hover {
+  filter: brightness(1.14);
+  transform: translateY(-1px);
+}
+
+.farmcity-profile-panel__action:active {
+  transform: translateY(1px);
+}
+
+.farmcity-profile-panel__action--active {
+  background: linear-gradient(180deg, #65833c, #4b632e);
+}
+
+.farmcity-profile-panel__action-icon {
+  flex: 0 0 28px;
+  font-size: 25px;
+  line-height: 1;
+  text-align: center;
+  filter: drop-shadow(1px 1px 0 rgba(38, 9, 2, 0.7));
+}
+
+.farmcity-profile-panel__action > span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.farmcity-profile-panel__action-rivet {
+  position: absolute;
+  top: 4px;
+  width: 6px;
+  height: 6px;
+}
+
+.farmcity-profile-panel__action-rivet--left {
+  left: 5px;
+}
+
+.farmcity-profile-panel__action-rivet--right {
+  right: 5px;
+}
+
+.farmcity-profile-panel__footer {
+  padding: 0 29px 14px;
+  background: #35190d;
+}
+
+.farmcity-profile-panel__close-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  border: 3px solid #1d0b05;
+  color: #fff0c9;
+  background: linear-gradient(180deg, #7e421f, #552510);
+  box-shadow: inset 0 0 0 2px #bd752d, 3px 3px 0 rgba(16, 5, 2, 0.4);
+  cursor: pointer;
+  font-size: 19px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0 #301107;
+}
+
+.farmcity-profile-panel__close-button:hover {
+  filter: brightness(1.14);
+}
+
+.farmcity-profile-panel__close-button span {
+  color: var(--profile-gold-light);
+  font-size: 23px;
+  line-height: 0;
+}
+
+.farmcity-profile-panel__subheading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 14px 7px;
+  color: var(--profile-gold);
+  font-size: 14px;
+  letter-spacing: 0.12em;
+}
+
+.farmcity-profile-panel__subheading-rule {
+  height: 2px;
+  flex: 1;
+  background: #98602a;
+}
+
+.farmcity-profile-panel__emote-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  padding: 7px 12px 15px;
+}
+
+.farmcity-profile-panel__emote {
+  display: flex;
+  min-height: 57px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 3px solid #2a1209;
+  color: #f5ddb0;
+  background: linear-gradient(180deg, #7a3c1b, #4f2411);
+  box-shadow: inset 0 0 0 1px #a7602a;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.farmcity-profile-panel__emote:hover {
+  background: #8f4b21;
+  transform: translateY(-1px);
+}
+
+.farmcity-profile-panel__emote > span {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.farmcity-profile-panel__emote small {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.farmcity-profile-panel__inventory {
+  min-height: 200px;
+  margin: 7px 12px 15px;
+  border: 3px dashed #98602a;
+  background:
+    linear-gradient(rgba(197, 134, 54, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(197, 134, 54, 0.07) 1px, transparent 1px),
+    #48220f;
+  background-size: 16px 16px;
+}
+
+.farmcity-profile-panel__inventory-empty {
+  display: flex;
+  min-height: 194px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 16px;
+  color: #ba9462;
+  text-align: center;
+}
+
+.farmcity-profile-panel__inventory-icon {
+  margin-bottom: 5px;
+  font-size: 39px;
+  line-height: 1;
+}
+
+.farmcity-profile-panel__inventory-empty strong {
+  color: var(--profile-cream);
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.farmcity-profile-panel__inventory-empty > span:last-child {
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+@media (max-width: 390px) {
+  .farmcity-profile-panel {
+    max-height: calc(100dvh - 20px);
+  }
+
+  .farmcity-profile-panel__identity {
+    gap: 7px;
+    padding-right: 9px;
+    padding-left: 9px;
+  }
+
+  .farmcity-profile-panel__avatar-frame {
+    width: 72px;
+    height: 72px;
+  }
+
+  .farmcity-profile-panel__avatar-stage {
+    width: 56px;
+    height: 56px;
+  }
+
+  .farmcity-profile-panel__avatar {
+    width: 56px;
+    height: 56px;
+  }
+
+  .farmcity-profile-panel__experience {
+    width: 62px;
+  }
+
+  .farmcity-profile-panel__experience .farmcity-profile-panel__bar {
+    width: 60px;
+  }
+
+  .farmcity-profile-panel__action {
+    gap: 5px;
+    padding-right: 5px;
+    padding-left: 5px;
+    font-size: 16px;
+  }
+
+  .farmcity-profile-panel__action-icon {
+    flex-basis: 24px;
+    font-size: 22px;
+  }
+
+  .farmcity-profile-panel__footer {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+}
+
 /* ── FarmCity wardrobe ───────────────────────────────────────────────────── */
 .wardrobe-page {
   min-height: 100dvh;
