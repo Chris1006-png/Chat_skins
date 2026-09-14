@@ -966,16 +966,17 @@
 
 .farmcity-profile-panel__avatar-stage {
   display: grid;
-  width: 65px;
-  height: 65px;
+  width: 74px;
+  height: 74px;
   place-items: center;
+  overflow: hidden;
   background:
     linear-gradient(45deg, rgba(255,255,255,0.11) 25%, transparent 25% 75%, rgba(255,255,255,0.11) 75%),
     #b9e09b;
   background-size: 8px 8px;
 }
 
-.farmcity-profile-panel__avatar {
+.farmcity-profile-panel__avatar-stage canvas {
   image-rendering: pixelated;
   shape-rendering: crispEdges;
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Avatar } from '@workspace/api-client-react';
 import { PanelBackdrop } from './panel-backdrop';
+import { SpriteAvatarPreview } from '@/components/sprite-avatar-preview';
 
 interface OwnAvatarPanelProps {
   username: string;
@@ -116,26 +117,25 @@ function PanelFrame({
 }
 
 function AvatarSprite({ avatar }: { avatar: Avatar }) {
+  const hasClothing =
+    avatar.shirtColor !== avatar.skinColor ||
+    avatar.pantsColor !== avatar.skinColor;
+
   return (
     <div className="farmcity-profile-panel__avatar-frame" data-testid="img-profile-avatar">
       <div className="farmcity-profile-panel__avatar-stage">
-        <svg width="64" height="64" viewBox="0 0 16 16" className="farmcity-profile-panel__avatar" aria-hidden="true">
-          <rect x="5" y="14" width="2" height="1" fill="#2A2A2A" />
-          <rect x="9" y="14" width="2" height="1" fill="#2A2A2A" />
-          <rect x="5" y="10" width="3" height="5" fill={avatar.pantsColor} />
-          <rect x="8" y="10" width="3" height="5" fill={avatar.pantsColor} />
-          <rect x="4" y="6" width="8" height="5" fill={avatar.shirtColor} />
-          <rect x="2" y="6" width="2" height="4" fill={avatar.shirtColor} />
-          <rect x="12" y="6" width="2" height="4" fill={avatar.shirtColor} />
-          <rect x="2" y="10" width="2" height="1" fill={avatar.skinColor} />
-          <rect x="12" y="10" width="2" height="1" fill={avatar.skinColor} />
-          <rect x="7" y="5" width="2" height="1" fill={avatar.skinColor} />
-          <rect x="5" y="1" width="6" height="5" fill={avatar.skinColor} />
-          <rect x="5" y="1" width="6" height="2" fill={avatar.hairColor} />
-          <rect x="5" y="1" width="1" height="3" fill={avatar.hairColor} />
-          <rect x="6" y="3" width="1" height="1" fill="#111" />
-          <rect x="9" y="3" width="1" height="1" fill="#111" />
-        </svg>
+        <SpriteAvatarPreview
+          skinColor={avatar.skinColor}
+          hairColor={avatar.hairColor}
+          shirtColor={avatar.shirtColor}
+          pantsColor={avatar.pantsColor}
+          hasClothing={hasClothing}
+          hairStyle={avatar.hairStyle}
+          accessory={avatar.accessory}
+          accessoryColor={avatar.accessoryColor}
+          facing={0}
+          size={74}
+        />
       </div>
     </div>
   );
