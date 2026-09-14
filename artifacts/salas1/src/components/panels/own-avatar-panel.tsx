@@ -3,6 +3,9 @@ import { Avatar } from '@workspace/api-client-react';
 import { PanelBackdrop } from './panel-backdrop';
 import { SpriteAvatarPreview } from '@/components/sprite-avatar-preview';
 
+const PROFILE_HAT_SRC = `${import.meta.env.BASE_URL}assets/farmcity-cowboy-hat.png`;
+const PROFILE_HORSESHOE_SRC = `${import.meta.env.BASE_URL}assets/farmcity-horseshoe.png`;
+
 interface OwnAvatarPanelProps {
   username: string;
   avatar: Avatar;
@@ -79,6 +82,12 @@ function PanelFrame({
         <div className="farmcity-profile-panel__corner farmcity-profile-panel__corner--br" aria-hidden="true" />
 
         <header className="farmcity-profile-panel__header">
+          <img
+            src={PROFILE_HAT_SRC}
+            alt=""
+            aria-hidden="true"
+            className="farmcity-profile-panel__hat"
+          />
           <Rivet className="farmcity-profile-panel__header-rivet" />
           <div className="farmcity-profile-panel__header-title">
             <span className="farmcity-profile-panel__header-star" aria-hidden="true">★</span>
@@ -303,9 +312,13 @@ export function OwnAvatarPanel({ username, avatar, onClose, onAction }: OwnAvata
           className="farmcity-profile-panel__close-button"
           data-testid="button-profile-close-panel"
         >
-          <span aria-hidden="true">⌄</span>
+          <img
+            src={PROFILE_HORSESHOE_SRC}
+            alt=""
+            aria-hidden="true"
+            className="farmcity-profile-panel__horseshoe"
+          />
           Cerrar panel
-          <span aria-hidden="true">⌄</span>
         </button>
       </div>
     </PanelFrame>

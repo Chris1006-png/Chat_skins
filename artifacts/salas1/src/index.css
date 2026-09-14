@@ -835,6 +835,19 @@
     linear-gradient(180deg, #78401f, #4b2312);
 }
 
+.farmcity-profile-panel__hat {
+  position: absolute;
+  z-index: 2;
+  top: -4px;
+  left: -13px;
+  width: 92px;
+  height: 61px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  pointer-events: none;
+  filter: drop-shadow(2px 3px 0 rgba(25, 8, 2, 0.48));
+}
+
 .farmcity-profile-panel__header::after {
   position: absolute;
   right: 8px;
@@ -1215,6 +1228,14 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-shadow: 1px 1px 0 #301107;
+}
+
+.farmcity-profile-panel__horseshoe {
+  width: 31px;
+  height: 29px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(1px 2px 0 rgba(25, 8, 2, 0.55));
 }
 
 .farmcity-profile-panel__close-button:hover {
