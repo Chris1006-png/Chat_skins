@@ -716,14 +716,20 @@ function rrect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h
 
 // The portrait uses the same 92px character render as the plaza. It is kept
 // off-screen so the speech bubble remains a canvas-only visual layer.
-let bubblePortraitCanvas: HTMLCanvasElement | null = null;
-function getBubblePortraitCanvas(): HTMLCanvasElement {
-  if (!bubblePortraitCanvas) {
-    bubblePortraitCanvas = document.createElement('canvas');
-    bubblePortraitCanvas.width = 92;
-    bubblePortraitCanvas.height = 92;
-  }
-  return bubblePortraitCanvas;
+// Cache by avatar appearance because the bubble is redrawn every animation
+// frame while it is visible.
+const bubblePortraitCache = new Map<string, HTMLCanvasElement>();
+function bubblePortraitKey(avatar: Avatar | undefined): string {
+  if (!avatar) return 'default';
+  return [
+    avatar.skinColor,
+    avatar.hairColor,
+    avatar.hairStyle,
+    avatar.shirtColor,
+    avatar.pantsColor,
+    avatar.accessory ?? 'none',
+    avatar.accessoryColor,
+  ].join('|');
 }
 
 function drawBubblePortrait(
@@ -734,67 +740,72 @@ function drawBubblePortrait(
   alpha: number,
   scale: number,
 ): void {
-  const portrait = getBubblePortraitCanvas();
-  const portraitCtx = portrait.getContext('2d');
-  if (!portraitCtx) return;
+  const key = bubblePortraitKey(avatar);
+  let portrait = bubblePortraitCache.get(key);
+  if (!portrait) {
+    portrait = document.createElement('canvas');
+    portrait.width = 92;
+    portrait.height = 92;
+    const portraitCtx = portrait.getContext('2d');
+    if (!portraitCtx) return;
 
-  portraitCtx.imageSmoothingEnabled = false;
-  portraitCtx.clearRect(0, 0, portrait.width, portrait.height);
+    portraitCtx.imageSmoothingEnabled = false;
+    const colors: AvatarColors | undefined = avatar
+      ? {
+          hair: avatar.hairColor,
+          skin: avatar.skinColor,
+          shirt: avatar.shirtColor,
+          pants: avatar.pantsColor,
+          hasClothing:
+            avatar.shirtColor !== avatar.skinColor ||
+            avatar.pantsColor !== avatar.skinColor,
+        }
+      : undefined;
+    const portraitState: CharAnimState = {
+      animKey: 'idle',
+      frame: 0,
+      lastFrameMs: 0,
+      row: 0,
+      flip: false,
+    };
 
-  const colors: AvatarColors | undefined = avatar
-    ? {
-        hair: avatar.hairColor,
-        skin: avatar.skinColor,
-        shirt: avatar.shirtColor,
-        pants: avatar.pantsColor,
-        hasClothing:
-          avatar.shirtColor !== avatar.skinColor ||
-          avatar.pantsColor !== avatar.skinColor,
-      }
-    : undefined;
-  const portraitState: CharAnimState = {
-    animKey: 'idle',
-    frame: 0,
-    lastFrameMs: 0,
-    row: 0,
-    flip: false,
-  };
-
-  drawSpriteCharacter(
-    portraitCtx,
-    46,
-    86,
-    portraitState,
-    '',
-    colors,
-    { drawName: false },
-  );
-
-  if (avatar?.hairStyle && avatar.hairStyle !== 'none') {
-    drawHairLayer(
+    drawSpriteCharacter(
       portraitCtx,
       46,
       86,
-      0,
-      false,
-      avatar.hairStyle,
-      avatar.hairColor,
-      'idle',
-      0,
+      portraitState,
+      '',
+      colors,
+      { drawName: false },
     );
-  }
-  if (avatar?.accessory && avatar.accessory !== 'none') {
-    drawAccessoryLayer(
-      portraitCtx,
-      46,
-      86,
-      0,
-      false,
-      avatar.accessory,
-      'idle',
-      0,
-      avatar.accessoryColor,
-    );
+
+    if (avatar?.hairStyle && avatar.hairStyle !== 'none') {
+      drawHairLayer(
+        portraitCtx,
+        46,
+        86,
+        0,
+        false,
+        avatar.hairStyle,
+        avatar.hairColor,
+        'idle',
+        0,
+      );
+    }
+    if (avatar?.accessory && avatar.accessory !== 'none') {
+      drawAccessoryLayer(
+        portraitCtx,
+        46,
+        86,
+        0,
+        false,
+        avatar.accessory,
+        'idle',
+        0,
+        avatar.accessoryColor,
+      );
+    }
+    bubblePortraitCache.set(key, portrait);
   }
 
   const radius = 20;
