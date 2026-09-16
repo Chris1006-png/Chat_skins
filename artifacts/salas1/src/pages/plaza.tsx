@@ -66,7 +66,6 @@ export default function Plaza() {
   const [roomError, setRoomError] = useState<string | null>(null);
   const [roomRequiresPassword, setRoomRequiresPassword] = useState(false);
   const [roomPassword, setRoomPassword] = useState('');
-  const [chatOpen, setChatOpen] = useState(false);
   const [roomTiles, setRoomTiles] = useState<Array<{ x: number; y: number }> | undefined>(() => {
     if (roomIdFromUrl) return undefined;
     try {
@@ -103,7 +102,6 @@ export default function Plaza() {
 
   const wsRef = useRef<WebSocket | null>(null);
   const roomPasswordRef = useRef('');
-  const chatEndRef = useRef<HTMLDivElement>(null);
   // Stable ref so handleSendChat doesn't need authPlayer as a dep
   const authPlayerRef = useRef(authPlayer);
   useEffect(() => { authPlayerRef.current = authPlayer; }, [authPlayer]);
@@ -398,11 +396,6 @@ export default function Plaza() {
     };
   }, [roomIdToJoin, token]);
 
-  // Auto-scroll chat
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages]);
-
   const handleMove = useCallback((posX: number, posY: number) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: 'player:move', data: { posX, posY } }));
@@ -582,60 +575,11 @@ export default function Plaza() {
       {/* Bottom HUD */}
       <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
 
-        {/* Chat history — slide-up panel, hidden by default */}
-        {chatOpen && (
-          <div
-            className="mx-0 overflow-y-auto px-3 py-2 flex flex-col gap-1 pointer-events-auto"
-            style={{
-              background: 'rgba(10,10,10,0.88)',
-              borderTop: '2px solid #3D2010',
-              maxHeight: '35vh',
-            }}
-          >
-            {chatMessages.length === 0
-              ? <p className="font-['VT323'] text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>Sin mensajes aún…</p>
-              : chatMessages.map((m, i) => (
-                <p key={i} className="font-['VT323'] text-sm leading-tight break-words">
-                  <span style={{ color: '#FFD54F' }}>{m.username}: </span>
-                  <span style={{ color: '#ddd' }}>{m.message}</span>
-                </p>
-              ))
-            }
-            <div ref={chatEndRef} />
-          </div>
-        )}
-
         {/* Chat input row */}
         <div
           className="flex items-center gap-0 pointer-events-auto"
           style={{ background: 'rgba(18,18,18,0.95)', borderTop: '3px solid #3D2010' }}
         >
-          {/* History toggle */}
-          <button
-            onClick={() => setChatOpen(v => !v)}
-            className="flex items-center justify-center flex-shrink-0 transition-opacity active:scale-95"
-            style={{
-              width: 48, height: 48,
-              background: chatOpen ? 'rgba(255,255,255,0.12)' : 'transparent',
-              border: 'none',
-              borderRight: '1px solid rgba(255,255,255,0.08)',
-              fontSize: 18,
-              position: 'relative',
-            }}
-            title="Historial de chat"
-          >
-            💬
-            {/* Unread badge — shows count when history is closed */}
-            {!chatOpen && chatMessages.length > 0 && (
-              <span
-                className="absolute top-1 right-1 font-['VT323'] text-xs leading-none px-1"
-                style={{ background: '#E74C3C', color: '#fff', borderRadius: 2, minWidth: 14, textAlign: 'center' }}
-              >
-                {chatMessages.length > 99 ? '99' : chatMessages.length}
-              </span>
-            )}
-          </button>
-
           {/* Text input */}
           <div className="flex items-center flex-1 px-3 py-2 gap-2">
             <input
