@@ -677,7 +677,7 @@ function drawBench(ctx: CanvasRenderingContext2D, sx: number, sy: number) {
 // ─── Bubble helpers ───────────────────────────────────────────────────────────
 
 /** Deterministic accent colour per username */
-const BUBBLE_PALETTE = ['#2980B9','#27AE60','#8E44AD','#E67E22','#C0392B','#16A085','#1A6BA0','#6C3483'];
+const BUBBLE_PALETTE = ['#8B5A2B', '#A6672C', '#C08A2C', '#6B3E1E', '#9A6A35', '#B58A3B'];
 function getBubbleColor(username: string): string {
   let h = 0;
   for (let i = 0; i < username.length; i++) h = (Math.imul(31, h) + username.charCodeAt(i)) | 0;
@@ -714,61 +714,172 @@ function rrect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h
   ctx.closePath();
 }
 
+// The portrait uses the same 92px character render as the plaza. It is kept
+// off-screen so the speech bubble remains a canvas-only visual layer.
+let bubblePortraitCanvas: HTMLCanvasElement | null = null;
+function getBubblePortraitCanvas(): HTMLCanvasElement {
+  if (!bubblePortraitCanvas) {
+    bubblePortraitCanvas = document.createElement('canvas');
+    bubblePortraitCanvas.width = 92;
+    bubblePortraitCanvas.height = 92;
+  }
+  return bubblePortraitCanvas;
+}
+
+function drawBubblePortrait(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  avatar: Avatar | undefined,
+  alpha: number,
+  scale: number,
+): void {
+  const portrait = getBubblePortraitCanvas();
+  const portraitCtx = portrait.getContext('2d');
+  if (!portraitCtx) return;
+
+  portraitCtx.imageSmoothingEnabled = false;
+  portraitCtx.clearRect(0, 0, portrait.width, portrait.height);
+
+  const colors: AvatarColors | undefined = avatar
+    ? {
+        hair: avatar.hairColor,
+        skin: avatar.skinColor,
+        shirt: avatar.shirtColor,
+        pants: avatar.pantsColor,
+        hasClothing:
+          avatar.shirtColor !== avatar.skinColor ||
+          avatar.pantsColor !== avatar.skinColor,
+      }
+    : undefined;
+  const portraitState: CharAnimState = {
+    animKey: 'idle',
+    frame: 0,
+    lastFrameMs: 0,
+    row: 0,
+    flip: false,
+  };
+
+  drawSpriteCharacter(
+    portraitCtx,
+    46,
+    86,
+    portraitState,
+    '',
+    colors,
+    { drawName: false },
+  );
+
+  if (avatar?.hairStyle && avatar.hairStyle !== 'none') {
+    drawHairLayer(
+      portraitCtx,
+      46,
+      86,
+      0,
+      false,
+      avatar.hairStyle,
+      avatar.hairColor,
+      'idle',
+      0,
+    );
+  }
+  if (avatar?.accessory && avatar.accessory !== 'none') {
+    drawAccessoryLayer(
+      portraitCtx,
+      46,
+      86,
+      0,
+      false,
+      avatar.accessory,
+      'idle',
+      0,
+      avatar.accessoryColor,
+    );
+  }
+
+  const radius = 20;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(centerX, centerY);
+  ctx.scale(scale, scale);
+
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.34)';
+  ctx.shadowBlur = 7;
+  ctx.shadowOffsetY = 3;
+  ctx.fillStyle = '#4A2A16';
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius - 2, 0, Math.PI * 2);
+  ctx.clip();
+  // Crop the head from the same full character frame used in the plaza.
+  ctx.drawImage(portrait, 9, 1, 74, 52, -18, -19, 36, 36);
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = '#D5A74A';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius - 1, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
 /**
- * Modern speech bubble drawn in raw SCREEN coordinates (call after ctx.restore()).
- *
- * @param sx      screen X of avatar centre
- * @param syFeet  screen Y of avatar feet
- * @param text    message text  (emojis supported natively)
- * @param username  display name shown in bold at top
- * @param alpha   0–1 fade
- * @param scale   0.9–1.0 pop-in
- * @param accent  accent colour for name label & inner border
- * @param cw / ch canvas pixel size for edge-clamping
+ * Compact FarmCity speech bubble drawn in raw SCREEN coordinates.
+ * The portrait and bubble share the same pop/fade animation.
  */
 function drawBubble(
   ctx: CanvasRenderingContext2D,
   sx: number, syFeet: number,
   text: string, username: string,
+  avatar: Avatar | undefined,
   alpha: number, scale: number,
   accent: string,
   cw: number, ch: number,
 ): void {
-  // ── Layout ─────────────────────────────────────────────────────────────────
-  const PAD_X  = 12;
-  const PAD_Y  = 9;
-  const R      = 10;          // corner radius
-  const TAIL   = 9;           // tail triangle half-base & height
-  const MAX_W  = Math.min(260, cw - 24);
-  const NAME_S = 14;
-  const MSG_S  = 13;
-  const LINE_H = 17;
-  const GAP    = 4;           // gap between name line and separator
+  const PAD_X = 12;
+  const PAD_Y = 8;
+  const FACE_SIZE = 40;
+  const FACE_GAP = 7;
+  const TAIL = 8;
+  const MAX_W = Math.min(188, cw - FACE_SIZE - 30);
+  const NAME_S = 12;
+  const MSG_S = 16;
+  const LINE_H = 18;
+  const GAP = 2;
 
   ctx.save();
 
-  // ── Measure ────────────────────────────────────────────────────────────────
   ctx.font = `bold ${NAME_S}px "VT323", monospace`;
-  const nameW = ctx.measureText(username).width;
-
+  const nameW = Math.min(ctx.measureText(username).width, MAX_W - PAD_X * 2);
   ctx.font = `${MSG_S}px "VT323", monospace`;
-  const maxCont = Math.max(nameW, Math.min(MAX_W, 200));
+  const maxCont = Math.max(64, MAX_W - PAD_X * 2);
   const lines   = wrapText(ctx, text, maxCont);
-  const maxLineW = Math.max(nameW, ...lines.map(l => ctx.measureText(l).width));
-
-  const bw = Math.min(maxLineW + PAD_X * 2, MAX_W + PAD_X * 2);
+  const maxLineW = Math.max(nameW, ...lines.map((line) => ctx.measureText(line).width));
+  const bw = Math.max(58, Math.min(maxLineW + PAD_X * 2, MAX_W));
   const bh = PAD_Y + NAME_S + GAP + lines.length * LINE_H + PAD_Y;
 
-  // ── Position (above name-tag; character body ≈ 48 px, nametag ≈ 22 px) ────
-  const tipTargetY = syFeet - 74;          // where tail tip points
-  let bx = sx - bw / 2;
+  const groupWidth = FACE_SIZE + FACE_GAP + bw;
+  const groupLeft = sx - groupWidth / 2;
+  let bx = groupLeft + FACE_SIZE + FACE_GAP;
+  const faceX = groupLeft + FACE_SIZE / 2;
+  const tipTargetY = syFeet - 78;
   let by = tipTargetY - bh - TAIL;
 
-  // Screen-edge clamp
-  bx = Math.max(6, Math.min(cw - bw - 6, bx));
+  const clampedGroupLeft = Math.max(6, Math.min(cw - groupWidth - 6, groupLeft));
+  bx = clampedGroupLeft + FACE_SIZE + FACE_GAP;
+  const clampedFaceX = clampedGroupLeft + FACE_SIZE / 2;
   by = Math.max(6, by);
 
-  // ── Pop-in transform (centred on bubble) ───────────────────────────────────
+  drawBubblePortrait(ctx, clampedFaceX, by + bh / 2, avatar, alpha, scale);
+
   const bcx = bx + bw / 2;
   const bcy = by + bh / 2;
   ctx.translate(bcx, bcy);
@@ -777,14 +888,13 @@ function drawBubble(
 
   ctx.globalAlpha = alpha;
 
-  // ── Drop shadow ────────────────────────────────────────────────────────────
   ctx.shadowColor   = 'rgba(0,0,0,0.26)';
-  ctx.shadowBlur    = 9;
+  ctx.shadowBlur    = 8;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 4;
 
-  // ── Body ───────────────────────────────────────────────────────────────────
-  ctx.fillStyle = '#FFFFFF';
+  const R = Math.min(24, bh / 2, bw / 2);
+  ctx.fillStyle = '#FFF1CF';
   rrect(ctx, bx, by, bw, bh, R);
   ctx.fill();
 
@@ -792,56 +902,41 @@ function drawBubble(
   ctx.shadowBlur  = 0;
   ctx.shadowOffsetY = 0;
 
-  // Outer grey border
-  ctx.strokeStyle = '#BDBDBD';
-  ctx.lineWidth   = 2;
+  // Dark wood outline and a thin golden inset line.
+  ctx.strokeStyle = '#4A2A16';
+  ctx.lineWidth   = 2.5;
   rrect(ctx, bx, by, bw, bh, R);
   ctx.stroke();
-
-  // Inner accent border (3-D pixel feel)
-  ctx.strokeStyle = accent;
-  ctx.lineWidth   = 1;
-  rrect(ctx, bx + 2.5, by + 2.5, bw - 5, bh - 5, Math.max(R - 3, 3));
+  ctx.strokeStyle = '#D5A74A';
+  ctx.lineWidth = 1;
+  rrect(ctx, bx + 3, by + 3, bw - 6, bh - 6, Math.max(3, R - 3));
   ctx.stroke();
 
-  // ── Tail ───────────────────────────────────────────────────────────────────
-  const tipX = Math.max(bx + R + 4, Math.min(bx + bw - R - 4, sx));
-
-  // White fill (covers bottom border line)
-  ctx.fillStyle = '#FFFFFF';
+  // Small tail points back toward the character, not straight down the group.
+  const tipX = Math.max(bx + R + 4, Math.min(bx + bw - R - 4, clampedFaceX));
+  ctx.fillStyle = '#FFF1CF';
   ctx.beginPath();
-  ctx.moveTo(tipX - TAIL, by + bh);
-  ctx.lineTo(tipX + TAIL, by + bh);
-  ctx.lineTo(tipX,        by + bh + TAIL);
+  ctx.moveTo(tipX - TAIL, by + bh - 2);
+  ctx.lineTo(tipX + TAIL, by + bh - 2);
+  ctx.lineTo(tipX, by + bh + TAIL);
   ctx.closePath();
   ctx.fill();
 
-  // Tail outline (only the two exposed sides)
-  ctx.strokeStyle = '#BDBDBD';
-  ctx.lineWidth   = 1.5;
+  ctx.strokeStyle = '#4A2A16';
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(tipX - TAIL, by + bh - 1);
+  ctx.moveTo(tipX - TAIL, by + bh - 2);
   ctx.lineTo(tipX,        by + bh + TAIL);
-  ctx.lineTo(tipX + TAIL, by + bh - 1);
+  ctx.lineTo(tipX + TAIL, by + bh - 2);
   ctx.stroke();
 
-  // ── Name (bold, accent colour) ─────────────────────────────────────────────
   ctx.font         = `bold ${NAME_S}px "VT323", monospace`;
-  ctx.fillStyle    = accent;
+  ctx.fillStyle    = accent || '#8B5A2B';
   ctx.textAlign    = 'left';
   ctx.textBaseline = 'top';
   ctx.fillText(username, bx + PAD_X, by + PAD_Y);
 
-  // Separator line
-  ctx.strokeStyle = '#EBEBEB';
-  ctx.lineWidth   = 1;
-  ctx.beginPath();
-  ctx.moveTo(bx + PAD_X,           by + PAD_Y + NAME_S + GAP);
-  ctx.lineTo(bx + bw - PAD_X,      by + PAD_Y + NAME_S + GAP);
-  ctx.stroke();
-
-  // ── Message lines ──────────────────────────────────────────────────────────
-  ctx.fillStyle = '#222222';
+  ctx.fillStyle = '#3D2010';
   ctx.font      = `${MSG_S}px "VT323", monospace`;
   lines.forEach((line, i) => {
     ctx.fillText(line, bx + PAD_X, by + PAD_Y + NAME_S + GAP + 2 + i * LINE_H);
@@ -856,7 +951,7 @@ const BENCH_TILES = new Set<string>();
 // ─── Component ────────────────────────────────────────────────────────────────
 const BUBBLE_DURATION = 6000; // ms total
 const BUBBLE_FADE_AT  = 4500; // ms before fade starts
-const BUBBLE_POP_MS   = 150;  // pop-in animation duration
+const BUBBLE_POP_MS   = 260;  // pop-in animation duration
 
 interface ChatMsg { username: string; message: string; avatarShirtColor?: string }
 
@@ -1331,13 +1426,23 @@ export function IsometricCanvas({
         const alpha = age >= BUBBLE_FADE_AT
           ? 1 - (age - BUBBLE_FADE_AT) / (BUBBLE_DURATION - BUBBLE_FADE_AT)
           : 1;
-        const scale = age < BUBBLE_POP_MS ? 0.9 + 0.1 * (age / BUBBLE_POP_MS) : 1;
+        const popProgress = Math.min(1, age / BUBBLE_POP_MS);
+        // A small damped overshoot makes the bubble and portrait feel like
+        // one natural speech balloon instead of a linear UI transition.
+        const scale = age < BUBBLE_POP_MS
+          ? 1 - Math.exp(-7 * popProgress) * Math.cos(10 * popProgress) * 0.18
+          : 1;
         return { text: b.text, alpha, scale, color: b.color };
       };
 
       // Bubbles are collected here and drawn AFTER ctx.restore() (screen space)
       // so they always appear on top and can be screen-edge clamped.
-      type BubbleDraw = BubbleState & { sx: number; sy: number; username: string };
+      type BubbleDraw = BubbleState & {
+        sx: number;
+        sy: number;
+        username: string;
+        avatar?: Avatar;
+      };
       const pendingBubbles: BubbleDraw[] = [];
 
       // ── Local player ─────────────────────────────────────────────────────────
@@ -1391,6 +1496,7 @@ export function IsometricCanvas({
       if (localBubble) {
         pendingBubbles.push({
           ...localBubble, username: localUname,
+          avatar: localAvatarRef.current,
           sx: localScreenSx,
           sy: localScreenSy,
         });
@@ -1530,6 +1636,7 @@ if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
         if (pBubble) {
           pendingBubbles.push({
             ...pBubble, username: p.username,
+            avatar: p.avatar ?? undefined,
             sx: rx - camRef.current.x,
             sy: ry + TILE_H / 2 - camRef.current.y + TILE_H * 2,
           });
@@ -1604,6 +1711,7 @@ if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
         drawBubble(
           ctx, bd.sx, bd.sy,
           bd.text, bd.username,
+           bd.avatar,
           bd.alpha, bd.scale, bd.color,
           canvas.width, canvas.height,
         );
