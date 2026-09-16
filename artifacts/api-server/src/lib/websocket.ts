@@ -3,7 +3,7 @@ import { type IncomingMessage } from "http";
 import { verifyToken } from "./auth";
 import { db } from "@workspace/db";
 import { chatMessagesTable, playerPositionsTable, avatarsTable, playersTable, roomsTable } from "@workspace/db";
-import { count, desc, eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { logger } from "./logger";
 import {
   broadcastToRoom,
@@ -255,30 +255,9 @@ export function createWebSocketServer(server: import("http").Server): WebSocketS
 
     logger.info({ playerId, username }, "WebSocket player connected");
 
-    // Send initial chat history
-    const recentMessages = await db
-      .select({
-        id: chatMessagesTable.id,
-        playerId: chatMessagesTable.playerId,
-        username: playersTable.username,
-        message: chatMessagesTable.message,
-        createdAt: chatMessagesTable.createdAt,
-      })
-      .from(chatMessagesTable)
-      .innerJoin(playersTable, eq(playersTable.id, chatMessagesTable.playerId))
-      .orderBy(desc(chatMessagesTable.createdAt))
-      .limit(20);
-
-    for (const msg of recentMessages.reverse()) {
-      safeSend(ws, {
-        type: "chat_message",
-        id: msg.id,
-        playerId: msg.playerId,
-        username: msg.username,
-        message: msg.message,
-        createdAt: msg.createdAt?.toISOString() ?? new Date().toISOString(),
-      });
-    }
+    // Do not replay persisted chat on join. The database remains the source
+    // for future administrative inspection, while the plaza only receives
+    // messages written during the current session.
 
     messageHandler = async (raw) => {
       let msg: {

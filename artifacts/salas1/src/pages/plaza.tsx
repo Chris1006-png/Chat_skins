@@ -102,6 +102,7 @@ export default function Plaza() {
 
   const wsRef = useRef<WebSocket | null>(null);
   const roomPasswordRef = useRef('');
+  const chatInputRef = useRef<HTMLInputElement>(null);
   // Stable ref so handleSendChat doesn't need authPlayer as a dep
   const authPlayerRef = useRef(authPlayer);
   useEffect(() => { authPlayerRef.current = authPlayer; }, [authPlayer]);
@@ -482,6 +483,7 @@ export default function Plaza() {
     socket.send(JSON.stringify({ type: 'chat', message: msg }));
 
     setChatInput('');
+    chatInputRef.current?.blur();
   }, [chatInput]);
 
   if (!authPlayer || !authPlayer.avatar) return null;
@@ -498,7 +500,10 @@ export default function Plaza() {
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ background: '#2A5022' }}>
       {/* Full-screen canvas */}
-      <div className="absolute inset-0">
+      <div
+        className="absolute inset-0"
+        onPointerDownCapture={() => chatInputRef.current?.blur()}
+      >
         <IsometricCanvas
           localPlayerId={authPlayer.id}
           localAvatar={authPlayer.avatar as Avatar | undefined}
@@ -583,13 +588,17 @@ export default function Plaza() {
           {/* Text input */}
           <div className="flex items-center flex-1 px-3 py-2 gap-2">
             <input
+              ref={chatInputRef}
               className="flex-1 bg-transparent font-['VT323'] text-base focus:outline-none"
               style={{ color: '#fff' }}
               placeholder="Decir..."
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && connectionState === 'connected') handleSendChat();
+                if (e.key === 'Enter' && connectionState === 'connected') {
+                  e.preventDefault();
+                  handleSendChat();
+                }
               }}
               maxLength={200}
             />
