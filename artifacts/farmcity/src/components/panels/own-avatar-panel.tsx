@@ -16,22 +16,10 @@ interface OwnAvatarPanelProps {
 type SubView = 'main' | 'emociones' | 'inventario';
 
 const EMOTES = [
-  { emoji: '👋', label: 'Hola' },
-  { emoji: '😄', label: 'Feliz' },
-  { emoji: '😂', label: 'Risa' },
-  { emoji: '😍', label: 'Amor' },
-  { emoji: '😢', label: 'Triste' },
-  { emoji: '😠', label: 'Enojado' },
-  { emoji: '🤩', label: 'Asombro' },
-  { emoji: '❤️', label: 'Corazón' },
-  { emoji: '🎉', label: 'Fiesta' },
-  { emoji: '👍', label: 'Bien' },
-  { emoji: '💀', label: 'Calaca' },
-  { emoji: '🔥', label: 'Fuego' },
-  { emoji: '⭐', label: 'Estrella' },
-  { emoji: '💤', label: 'Dormir' },
-  { emoji: '🌈', label: 'Arcoíris' },
-  { emoji: '🍀', label: 'Suerte' },
+  { emoji: '✨', label: 'Brillo' },
+  { emoji: '💖', label: 'Corazones' },
+  { emoji: '😄', label: 'Caritas' },
+  { emoji: '🎵', label: 'Música' },
 ];
 
 const actionItems = [

@@ -43,6 +43,7 @@ interface AvatarSnapshot {
 
 const clients = new Map<number, GameClient>();
 const MAX_ROOMS_PER_PLAYER = 10;
+const CHAT_EFFECTS = new Set(["sparkles", "hearts", "faces", "music"]);
 
 function safeSend(ws: WebSocket, data: unknown): void {
   if (ws.readyState === WebSocket.OPEN) {
@@ -265,6 +266,7 @@ export function createWebSocketServer(server: import("http").Server): WebSocketS
         posX?: number;
         posY?: number;
         message?: string;
+        effect?: string;
         action?: string;
         payload?: string;
         duration?: number;
@@ -489,6 +491,10 @@ export function createWebSocketServer(server: import("http").Server): WebSocketS
       } else if (msg.type === "chat" && msg.message) {
         const text = String(msg.message).slice(0, 200).trim();
         if (!text) return;
+        const effect =
+          typeof msg.effect === "string" && CHAT_EFFECTS.has(msg.effect)
+            ? msg.effect
+            : undefined;
 
         const [saved] = await db
           .insert(chatMessagesTable)
@@ -503,6 +509,7 @@ export function createWebSocketServer(server: import("http").Server): WebSocketS
             playerId,
             username,
             message: text,
+            effect,
             createdAt: saved?.createdAt?.toISOString() ?? new Date().toISOString(),
           },
           playerId,

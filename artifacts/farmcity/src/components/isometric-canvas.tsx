@@ -684,6 +684,61 @@ function getBubbleColor(username: string): string {
   return BUBBLE_PALETTE[Math.abs(h) % BUBBLE_PALETTE.length];
 }
 
+type ChatEffect = 'sparkles' | 'hearts' | 'faces' | 'music';
+
+function drawChatEffect(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  effect: ChatEffect | undefined,
+  alpha: number,
+  scale: number,
+  now: number,
+): void {
+  if (!effect) return;
+
+  const pulse = 1 + Math.sin(now / 180) * 0.05;
+  const points = [
+    [-26, -18],
+    [25, -20],
+    [-24, 20],
+    [24, 19],
+  ] as const;
+  const glyphs: Record<ChatEffect, string[]> = {
+    sparkles: ['✦', '✧', '✦', '✧'],
+    hearts: ['♥', '❤', '♥', '❤'],
+    faces: ['😄', '😊', '😆', '🙂'],
+    music: ['♪', '♫', '♪', '♫'],
+  };
+  const colors: Record<ChatEffect, string> = {
+    sparkles: '#FFD34E',
+    hearts: '#FF5C7A',
+    faces: '#FFD166',
+    music: '#C77DFF',
+  };
+  const fontSize = Math.max(14, Math.round(18 * scale * pulse));
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.font = `${fontSize}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = colors[effect];
+  ctx.shadowColor = effect === 'sparkles' ? '#FFF3A3' : 'rgba(0,0,0,0.45)';
+  ctx.shadowBlur = 4;
+
+  glyphs[effect].forEach((glyph, index) => {
+    const [offsetX, offsetY] = points[index];
+    const drift = Math.sin(now / 260 + index) * 2;
+    ctx.fillText(
+      glyph,
+      centerX + offsetX * scale,
+      centerY + offsetY * scale + drift,
+    );
+  });
+  ctx.restore();
+}
+
 /** Word-wrap text to fit maxW (in canvas units). Emoji-safe: canvas handles them natively. */
 function wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
   const words = text.split(' ');
@@ -853,6 +908,8 @@ function drawBubble(
   avatar: Avatar | undefined,
   alpha: number, scale: number,
   accent: string,
+  effect: ChatEffect | undefined,
+  now: number,
   cw: number, ch: number,
 ): void {
   const PAD_X = 12;
@@ -890,6 +947,7 @@ function drawBubble(
   by = Math.max(6, by);
 
   drawBubblePortrait(ctx, clampedFaceX, by + bh / 2, avatar, alpha, scale);
+  drawChatEffect(ctx, clampedFaceX, by + bh / 2, effect, alpha, scale, now);
 
   const bcx = bx + bw / 2;
   const bcy = by + bh / 2;
@@ -964,7 +1022,12 @@ const BUBBLE_DURATION = 6000; // ms total
 const BUBBLE_FADE_AT  = 4500; // ms before fade starts
 const BUBBLE_POP_MS   = 260;  // pop-in animation duration
 
-interface ChatMsg { username: string; message: string; avatarShirtColor?: string }
+interface ChatMsg {
+  username: string;
+  message: string;
+  effect?: ChatEffect;
+  avatarShirtColor?: string;
+}
 
 /** Action state driven by the avatar panel — read each frame via ref (no re-renders) */
 export interface LocalAction {
@@ -1039,7 +1102,12 @@ export function IsometricCanvas({
   useEffect(() => { loadSprites(); }, []);
 
   // Speech bubbles: username → { text, startTime }
-  const bubblesRef = useRef<Map<string, { text: string; startTime: number; color: string }>>(new Map());
+  const bubblesRef = useRef<Map<string, {
+    text: string;
+    startTime: number;
+    color: string;
+    effect?: ChatEffect;
+  }>>(new Map());
 
   // Mirror latest props into refs so the render loop always has fresh data
   const playersStateRef   = useRef(players);
@@ -1101,6 +1169,7 @@ export function IsometricCanvas({
       text: last.message,
       startTime: performance.now(),
       color: getBubbleColor(last.username),
+      effect: last.effect,
     });
   }, [messages]);
 
@@ -1428,7 +1497,13 @@ export function IsometricCanvas({
       const entities: Entity[] = [];
 
       // ── Bubble state helper ──────────────────────────────────────────────────
-      type BubbleState = { text: string; alpha: number; scale: number; color: string };
+      type BubbleState = {
+        text: string;
+        alpha: number;
+        scale: number;
+        color: string;
+        effect?: ChatEffect;
+      };
       const getBubble = (username: string): BubbleState | null => {
         const b = bubblesRef.current.get(username);
         if (!b) return null;
@@ -1443,7 +1518,7 @@ export function IsometricCanvas({
         const scale = age < BUBBLE_POP_MS
           ? 1 - Math.exp(-7 * popProgress) * Math.cos(10 * popProgress) * 0.18
           : 1;
-        return { text: b.text, alpha, scale, color: b.color };
+        return { text: b.text, alpha, scale, color: b.color, effect: b.effect };
       };
 
       // Bubbles are collected here and drawn AFTER ctx.restore() (screen space)
@@ -1723,7 +1798,7 @@ if (lAvatar?.hairStyle && lAvatar.hairStyle !== 'none') {
           ctx, bd.sx, bd.sy,
           bd.text, bd.username,
            bd.avatar,
-          bd.alpha, bd.scale, bd.color,
+           bd.alpha, bd.scale, bd.color, bd.effect, now,
           canvas.width, canvas.height,
         );
       }

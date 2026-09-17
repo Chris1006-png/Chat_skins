@@ -29,10 +29,19 @@ interface ChatEntry {
   username: string;
   message: string;
   createdAt: string;
+  effect?: ChatEffect;
 }
 
+type ChatEffect = 'sparkles' | 'hearts' | 'faces' | 'music';
 type ConnectionState = 'connecting' | 'connected' | 'reconnecting';
 const DEFAULT_PLAZA_ROOM_ID = 'plaza';
+
+const CHAT_EFFECT_OPTIONS: Array<{ id: ChatEffect; icon: string; label: string }> = [
+  { id: 'sparkles', icon: '✨', label: 'Brillo' },
+  { id: 'hearts', icon: '💖', label: 'Corazones' },
+  { id: 'faces', icon: '😄', label: 'Caritas' },
+  { id: 'music', icon: '🎵', label: 'Música' },
+];
 
 interface RoomSnapshot {
   id?: string;
@@ -61,6 +70,7 @@ export default function Plaza() {
   const remoteActionsRef = useRef<Map<number, LocalAction>>(new Map());
   const [chatMessages, setChatMessages] = useState<ChatEntry[]>([]);
   const [chatInput, setChatInput] = useState('');
+  const [selectedChatEffect, setSelectedChatEffect] = useState<ChatEffect>('sparkles');
   const [panel, setPanel] = useState<PanelState | null>(null);
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting');
   const [roomError, setRoomError] = useState<string | null>(null);
@@ -334,16 +344,17 @@ export default function Plaza() {
               break;
             }
             case 'chat_message': {
-              const { id, username, message, createdAt } = msg as {
+              const { id, username, message, createdAt, effect } = msg as {
                 id?: number;
                 type: string;
                 username: string;
                 message: string;
                 createdAt: string;
+                effect?: ChatEffect;
               };
               setChatMessages((prev) => {
                 if (typeof id === 'number' && prev.some((entry) => entry.id === id)) return prev;
-                return [...prev.slice(-49), { id, username, message, createdAt }];
+                return [...prev.slice(-49), { id, username, message, createdAt, effect }];
               });
               break;
             }
@@ -476,15 +487,16 @@ export default function Plaza() {
         username: authPlayerRef.current!.username,
         message: msg,
         createdAt: new Date().toISOString(),
+        effect: selectedChatEffect,
       },
     ]);
 
     // Send to server; server will NOT echo back to sender to avoid duplicates
-    socket.send(JSON.stringify({ type: 'chat', message: msg }));
+    socket.send(JSON.stringify({ type: 'chat', message: msg, effect: selectedChatEffect }));
 
     setChatInput('');
     chatInputRef.current?.blur();
-  }, [chatInput]);
+  }, [chatInput, selectedChatEffect]);
 
   if (!authPlayer || !authPlayer.avatar) return null;
 
@@ -585,6 +597,39 @@ export default function Plaza() {
           className="flex items-center gap-0 pointer-events-auto"
           style={{ background: 'rgba(18,18,18,0.95)', borderTop: '3px solid #3D2010' }}
         >
+          {/* Chat effect picker */}
+          <div
+            className="flex items-center gap-1 px-2 flex-shrink-0"
+            role="group"
+            aria-label="Efecto del mensaje"
+          >
+            {CHAT_EFFECT_OPTIONS.map(({ id, icon, label }) => {
+              const isSelected = selectedChatEffect === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  title={label}
+                  aria-label={`Efecto: ${label}`}
+                  aria-pressed={isSelected}
+                  onClick={() => setSelectedChatEffect(id)}
+                  className="flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+                  style={{
+                    width: 32,
+                    height: 32,
+                    border: isSelected ? '2px solid #F6C453' : '1px solid rgba(255,255,255,0.18)',
+                    background: isSelected ? 'rgba(122,79,30,0.9)' : 'rgba(255,255,255,0.06)',
+                    boxShadow: isSelected ? '0 0 0 1px rgba(246,196,83,0.2)' : 'none',
+                    fontSize: 18,
+                    lineHeight: 1,
+                  }}
+                >
+                  {icon}
+                </button>
+              );
+            })}
+          </div>
+
           {/* Text input */}
           <div className="flex items-center flex-1 px-3 py-2 gap-2">
             <input
