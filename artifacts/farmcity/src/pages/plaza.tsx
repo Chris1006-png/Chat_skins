@@ -71,6 +71,7 @@ export default function Plaza() {
   const [chatMessages, setChatMessages] = useState<ChatEntry[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [selectedChatEffect, setSelectedChatEffect] = useState<ChatEffect>('sparkles');
+  const [isChatEffectPickerOpen, setIsChatEffectPickerOpen] = useState(false);
   const [panel, setPanel] = useState<PanelState | null>(null);
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting');
   const [roomError, setRoomError] = useState<string | null>(null);
@@ -508,6 +509,8 @@ export default function Plaza() {
   const roomOnlineCount = connectionState === 'connected'
     ? Object.keys(remotePlayers).length + 1
     : plazaStatus?.onlineCount;
+  const selectedEffectOption =
+    CHAT_EFFECT_OPTIONS.find(({ id }) => id === selectedChatEffect) ?? CHAT_EFFECT_OPTIONS[0];
 
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ background: '#2A5022' }}>
@@ -599,35 +602,71 @@ export default function Plaza() {
         >
           {/* Chat effect picker */}
           <div
-            className="flex items-center gap-1 px-2 flex-shrink-0"
+            className="relative flex items-center px-2 flex-shrink-0"
             role="group"
             aria-label="Efecto del mensaje"
           >
-            {CHAT_EFFECT_OPTIONS.map(({ id, icon, label }) => {
-              const isSelected = selectedChatEffect === id;
-              return (
+            <button
+              type="button"
+              title="Elegir efecto"
+              aria-label={`Efecto del mensaje: ${selectedEffectOption.label}`}
+              aria-haspopup="true"
+              aria-expanded={isChatEffectPickerOpen}
+              onClick={() => setIsChatEffectPickerOpen((open) => !open)}
+              className="flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+              style={{
+                width: 36,
+                height: 36,
+                border: isChatEffectPickerOpen ? '2px solid #F6C453' : '1px solid rgba(255,255,255,0.18)',
+                background: isChatEffectPickerOpen ? 'rgba(122,79,30,0.9)' : 'rgba(255,255,255,0.06)',
+                boxShadow: isChatEffectPickerOpen ? '0 0 0 1px rgba(246,196,83,0.2)' : 'none',
+                fontSize: 20,
+                lineHeight: 1,
+              }}
+            >
+              {selectedEffectOption.icon}
+            </button>
+
+            {isChatEffectPickerOpen && (
+              <div
+                className="absolute bottom-full left-1 mb-2 flex gap-1 p-2"
+                role="menu"
+                aria-label="Efectos disponibles"
+                style={{
+                  background: 'rgba(18,18,18,0.98)',
+                  border: '2px solid #7A4F1E',
+                  boxShadow: '0 4px 0 rgba(0,0,0,0.35)',
+                  zIndex: 20,
+                }}
+              >
+                {CHAT_EFFECT_OPTIONS.map(({ id, icon, label }) => (
                 <button
                   key={id}
                   type="button"
                   title={label}
                   aria-label={`Efecto: ${label}`}
-                  aria-pressed={isSelected}
-                  onClick={() => setSelectedChatEffect(id)}
+                  aria-pressed={selectedChatEffect === id}
+                  role="menuitem"
+                  onClick={() => {
+                    setSelectedChatEffect(id);
+                    setIsChatEffectPickerOpen(false);
+                  }}
                   className="flex items-center justify-center transition-all hover:scale-110 active:scale-95"
                   style={{
                     width: 32,
                     height: 32,
-                    border: isSelected ? '2px solid #F6C453' : '1px solid rgba(255,255,255,0.18)',
-                    background: isSelected ? 'rgba(122,79,30,0.9)' : 'rgba(255,255,255,0.06)',
-                    boxShadow: isSelected ? '0 0 0 1px rgba(246,196,83,0.2)' : 'none',
+                    border: selectedChatEffect === id ? '2px solid #F6C453' : '1px solid rgba(255,255,255,0.18)',
+                    background: selectedChatEffect === id ? 'rgba(122,79,30,0.9)' : 'rgba(255,255,255,0.06)',
+                    boxShadow: selectedChatEffect === id ? '0 0 0 1px rgba(246,196,83,0.2)' : 'none',
                     fontSize: 18,
                     lineHeight: 1,
                   }}
                 >
                   {icon}
                 </button>
-              );
-            })}
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Text input */}
