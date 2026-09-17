@@ -2,12 +2,16 @@ import { useState } from 'react';
 import { Avatar } from '@workspace/api-client-react';
 import { PanelBackdrop } from './panel-backdrop';
 import { SpriteAvatarPreview } from '@/components/sprite-avatar-preview';
+import { useLanguage } from '@/contexts/language-context';
 
 const PROFILE_HAT_SRC = `${import.meta.env.BASE_URL}assets/farmcity-cowboy-hat.png`;
 const PROFILE_HORSESHOE_SRC = `${import.meta.env.BASE_URL}assets/farmcity-horseshoe.png`;
 
 interface OwnAvatarPanelProps {
   username: string;
+  nickname?: string | null;
+  status?: string | null;
+  age?: number | null;
   avatar: Avatar;
   onClose: () => void;
   onAction: (action: string, payload?: string) => void;
@@ -23,14 +27,14 @@ const EMOTES = [
 ];
 
 const actionItems = [
-  { id: 'change-costume', icon: '👗', label: 'Cambiar ropa' },
-  { id: 'dance', icon: '💃', label: 'Bailar' },
-  { id: 'emotions', icon: '😄', label: 'Emociones' },
-  { id: 'sit', icon: '🪑', label: 'Sentarse' },
-  { id: 'photo', icon: '📷', label: 'Fotografía' },
-  { id: 'inventory', icon: '🎒', label: 'Inventario' },
-  { id: 'farm', icon: '🏡', label: 'Mi Granja' },
-  { id: 'settings', icon: '⚙️', label: 'Config.' },
+  { id: 'change-costume', icon: '👗' },
+  { id: 'dance', icon: '💃' },
+  { id: 'emotions', icon: '😄' },
+  { id: 'sit', icon: '🪑' },
+  { id: 'photo', icon: '📷' },
+  { id: 'inventory', icon: '🎒' },
+  { id: 'farm', icon: '🏡' },
+  { id: 'settings', icon: '⚙️' },
 ];
 
 function StatBar({ value, max, color }: { value: number; max: number; color: string }) {
@@ -61,6 +65,8 @@ function PanelFrame({
   onBack?: () => void;
   children: React.ReactNode;
 }) {
+  const { t } = useLanguage();
+
   return (
     <PanelBackdrop onClose={onClose}>
       <section className="farmcity-profile-panel" role="dialog" aria-modal="true" aria-label={title}>
@@ -87,7 +93,7 @@ function PanelFrame({
                   className="farmcity-profile-panel__back"
                   data-testid="button-profile-back"
                 >
-                  ‹ Volver
+                    ‹ {t('back')}
                 </button>
                 <span>{title.toUpperCase()}</span>
               </div>
@@ -100,7 +106,7 @@ function PanelFrame({
             type="button"
             onClick={onClose}
             className="farmcity-profile-panel__close-icon"
-            aria-label="Cerrar panel"
+            aria-label={t('close')}
             data-testid="button-profile-close"
           >
             ×
@@ -139,16 +145,27 @@ function AvatarSprite({ avatar }: { avatar: Avatar }) {
 }
 
 function InventoryEmpty() {
+  const { t } = useLanguage();
+
   return (
     <div className="farmcity-profile-panel__inventory-empty" data-testid="empty-profile-inventory">
       <span className="farmcity-profile-panel__inventory-icon" aria-hidden="true">🎒</span>
-      <strong>Inventario vacío</strong>
-      <span>Recoge objetos en el mundo para verlos aquí</span>
+      <strong>{t('emptyInventory')}</strong>
+      <span>{t('emptyInventoryHint')}</span>
     </div>
   );
 }
 
-export function OwnAvatarPanel({ username, avatar, onClose, onAction }: OwnAvatarPanelProps) {
+export function OwnAvatarPanel({
+  username,
+  nickname,
+  status,
+  age,
+  avatar,
+  onClose,
+  onAction,
+}: OwnAvatarPanelProps) {
+  const { t } = useLanguage();
   const [view, setView] = useState<SubView>('main');
   const [isSitting, setIsSitting] = useState(false);
 
@@ -185,9 +202,9 @@ export function OwnAvatarPanel({ username, avatar, onClose, onAction }: OwnAvata
 
   if (view === 'emociones') {
     return (
-      <PanelFrame title="Emociones" onClose={onClose} onBack={() => setView('main')}>
+      <PanelFrame title={t('actionEmotions')} onClose={onClose} onBack={() => setView('main')}>
         <div className="farmcity-profile-panel__subheading">
-          <span>GESTOS DEL RANCHO</span>
+          <span>{t('ranchGestures')}</span>
           <span className="farmcity-profile-panel__subheading-rule" />
         </div>
         <div className="farmcity-profile-panel__emote-grid">
@@ -212,9 +229,9 @@ export function OwnAvatarPanel({ username, avatar, onClose, onAction }: OwnAvata
 
   if (view === 'inventario') {
     return (
-      <PanelFrame title="Inventario" onClose={onClose} onBack={() => setView('main')}>
+      <PanelFrame title={t('inventory')} onClose={onClose} onBack={() => setView('main')}>
         <div className="farmcity-profile-panel__subheading">
-          <span>BOLSA DE VIAJE</span>
+          <span>{t('travelBag')}</span>
           <span className="farmcity-profile-panel__subheading-rule" />
         </div>
         <div className="farmcity-profile-panel__inventory">
@@ -225,13 +242,15 @@ export function OwnAvatarPanel({ username, avatar, onClose, onAction }: OwnAvata
   }
 
   return (
-    <PanelFrame title="Perfil de avatar" onClose={onClose}>
+       <PanelFrame title={t('profile')} onClose={onClose}>
       <div className="farmcity-profile-panel__identity">
         <AvatarSprite avatar={avatar} />
         <div className="farmcity-profile-panel__identity-copy">
           <strong data-testid="text-profile-username">{username.toUpperCase()}</strong>
-          <span>Nivel <b>1</b></span>
-          <span className="farmcity-profile-panel__role">🌾 Granjero</span>
+           {nickname && <span>@{nickname}</span>}
+           {age && <span>{t('age')}: <b>{age}</b></span>}
+           {status && <span className="farmcity-profile-panel__role">“{status}”</span>}
+           <span className="farmcity-profile-panel__role">🌾 {t('farmer')}</span>
         </div>
         <div className="farmcity-profile-panel__experience" data-testid="status-profile-experience">
           <span>EXP</span>
@@ -240,30 +259,41 @@ export function OwnAvatarPanel({ username, avatar, onClose, onAction }: OwnAvata
         </div>
       </div>
 
-      <div className="farmcity-profile-panel__stats" data-testid="status-profile-stats">
+       <div className="farmcity-profile-panel__stats" data-testid="status-profile-stats">
         <div className="farmcity-profile-panel__stat-row">
           <span className="farmcity-profile-panel__stat-icon" aria-hidden="true">❤️</span>
-          <span className="farmcity-profile-panel__stat-label">Vida</span>
+           <span className="farmcity-profile-panel__stat-label">{t('health')}</span>
           <StatBar value={100} max={100} color="#E94B3C" />
           <b>100/100</b>
         </div>
         <div className="farmcity-profile-panel__currency-row">
           <div>
             <span className="farmcity-profile-panel__currency-icon" aria-hidden="true">🪙</span>
-            <span>Oro</span>
+             <span>{t('gold')}</span>
             <b>0</b>
           </div>
           <i aria-hidden="true" />
           <div>
             <span className="farmcity-profile-panel__currency-icon" aria-hidden="true">💎</span>
-            <span>Diamantes</span>
+             <span>{t('diamonds')}</span>
             <b>0</b>
           </div>
         </div>
       </div>
 
       <div className="farmcity-profile-panel__actions" data-testid="profile-action-grid">
-        {actionItems.map(({ id, icon, label }) => {
+         {actionItems.map(({ id, icon }) => {
+           const labels: Record<string, string> = {
+             'change-costume': t('actionChangeCostume'),
+             dance: t('actionDance'),
+             emotions: t('actionEmotions'),
+             sit: t('actionSit'),
+             photo: t('actionPhoto'),
+             inventory: t('inventory'),
+             farm: t('actionFarm'),
+             settings: t('actionSettings'),
+           };
+           const label = labels[id] ?? id;
           const isActiveSit = id === 'sit' && isSitting;
           const onClick = {
             'change-costume': handleCambiarRopa,
@@ -273,7 +303,7 @@ export function OwnAvatarPanel({ username, avatar, onClose, onAction }: OwnAvata
             photo: handleFoto,
             inventory: () => setView('inventario'),
             farm: handleMiGranja,
-            settings: () => alert('Configuración próximamente ⚙️'),
+            settings: () => onAction('settings'),
           }[id];
 
           return (
@@ -285,7 +315,7 @@ export function OwnAvatarPanel({ username, avatar, onClose, onAction }: OwnAvata
               data-testid={`button-profile-${id}`}
             >
               <span className="farmcity-profile-panel__action-icon" aria-hidden="true">{icon}</span>
-              <span>{isActiveSit ? 'Levantarse' : label}</span>
+               <span>{isActiveSit ? t('standUp') : label}</span>
               <Rivet className="farmcity-profile-panel__action-rivet farmcity-profile-panel__action-rivet--left" />
               <Rivet className="farmcity-profile-panel__action-rivet farmcity-profile-panel__action-rivet--right" />
             </button>
@@ -306,7 +336,7 @@ export function OwnAvatarPanel({ username, avatar, onClose, onAction }: OwnAvata
             aria-hidden="true"
             className="farmcity-profile-panel__horseshoe"
           />
-          Cerrar panel
+           {t('close')}
         </button>
       </div>
     </PanelFrame>

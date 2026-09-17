@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/auth-context';
+import { useLanguage } from '@/contexts/language-context';
 import type { PlayerData } from '@/contexts/auth-context';
 import { useLogin, useRegister } from '@workspace/api-client-react';
 import type { ErrorType } from '@workspace/api-client-react';
@@ -20,6 +21,7 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login, player } = useAuth();
+  const { t, lang } = useLanguage();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -102,7 +104,7 @@ export default function Home() {
 
         <div className="farmcity-login-content">
           <h1 id="farmcity-login-title" className="sr-only">
-            {isRegister ? 'Crear una cuenta en FarmCity' : 'Entrar a FarmCity'}
+              {isRegister ? `${t('createAccount')} en FarmCity` : `${t('login')} a FarmCity`}
           </h1>
 
           <div
@@ -120,7 +122,7 @@ export default function Home() {
                 setError('');
               }}
             >
-              Entrar
+              {t('login')}
             </button>
             <button
               type="button"
@@ -132,19 +134,19 @@ export default function Home() {
                 setError('');
               }}
             >
-              Crear cuenta
+              {t('createAccount')}
             </button>
           </div>
 
           <p className="farmcity-login-kicker">
             {isRegister
-              ? 'Crea tu personaje y empieza tu historia'
-              : 'Tu ciudad campestre te está esperando'}
+               ? t('createKicker')
+               : t('waitingKicker')}
           </p>
 
           <form onSubmit={handleSubmit} className="farmcity-login-form">
             <div className="farmcity-login-field">
-              <label htmlFor="farmcity-username">Nombre de jugador</label>
+              <label htmlFor="farmcity-username">{t('playerName')}</label>
               <input
                 id="farmcity-username"
                 type="text"
@@ -157,12 +159,12 @@ export default function Home() {
                 minLength={3}
                 maxLength={20}
                 autoComplete="username"
-                placeholder="Escribe tu nombre"
+                 placeholder={t('namePlaceholder')}
               />
             </div>
 
             <div className="farmcity-login-field">
-              <label htmlFor="farmcity-password">Contraseña</label>
+              <label htmlFor="farmcity-password">{lang === 'en' ? 'Password' : 'Contraseña'}</label>
               <input
                 id="farmcity-password"
                 type="password"
@@ -174,7 +176,7 @@ export default function Home() {
                 required
                 minLength={6}
                 autoComplete={isRegister ? 'new-password' : 'current-password'}
-                placeholder="Mínimo 6 caracteres"
+                 placeholder={lang === 'en' ? 'At least 6 characters' : 'Mínimo 6 caracteres'}
               />
             </div>
 
@@ -193,8 +195,8 @@ export default function Home() {
               {isPending
                 ? 'Cargando…'
                 : isRegister
-                  ? 'Crear mi cuenta'
-                  : 'Entrar al juego'}
+                 ? t('createAccount')
+                 : t('login')}
             </button>
           </form>
 
@@ -207,8 +209,8 @@ export default function Home() {
             }}
           >
             {isRegister
-              ? '¿Ya tienes una cuenta? Entrar'
-              : '¿No tienes cuenta? Regístrate'}
+               ? (lang === 'en' ? 'Already have an account? Log in' : '¿Ya tienes una cuenta? Entrar')
+               : (lang === 'en' ? 'Need an account? Sign up' : '¿No tienes cuenta? Regístrate')}
           </button>
 
           <p className="farmcity-login-note">

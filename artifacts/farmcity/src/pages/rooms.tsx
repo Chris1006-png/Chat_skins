@@ -12,6 +12,7 @@ import {
   useGetPublicRooms,
 } from '@workspace/api-client-react';
 import { useAuth } from '@/contexts/auth-context';
+import { useLanguage } from '@/contexts/language-context';
 
 const DEFAULT_NEW_ROOM = {
   name: 'Mi rincón',
@@ -27,11 +28,11 @@ const DEFAULT_NEW_ROOM = {
   isPublic: true,
 };
 
-function formatRoomDate(value: string): string {
+function formatRoomDate(value: string, lang: 'es' | 'en'): string {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Sala disponible';
+  if (Number.isNaN(date.getTime())) return lang === 'en' ? 'Room available' : 'Sala disponible';
 
-  return new Intl.DateTimeFormat('es-CO', {
+  return new Intl.DateTimeFormat(lang === 'en' ? 'en-US' : 'es-CO', {
     day: 'numeric',
     month: 'short',
   }).format(date);
@@ -39,6 +40,7 @@ function formatRoomDate(value: string): string {
 
 export default function Rooms() {
   const { token, player } = useAuth();
+  const { t, lang } = useLanguage();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const myRoomsQuery = useGetMyRooms({
@@ -111,7 +113,7 @@ export default function Rooms() {
             type="button"
             className="room-list-back"
             onClick={() => setLocation('/plaza')}
-            aria-label="Volver a la plaza"
+             aria-label={t('backToPlaza')}
           >
             <ArrowLeft size={18} />
           </button>
@@ -120,8 +122,8 @@ export default function Rooms() {
               <DoorOpen size={22} />
             </div>
             <div>
-              <small>FarmCity / Comunidad</small>
-              <strong>Salas</strong>
+               <small>FarmCity / {t('communityRooms')}</small>
+               <strong>{t('rooms')}</strong>
             </div>
           </div>
           <button
@@ -129,8 +131,8 @@ export default function Rooms() {
             className="room-list-refresh"
             onClick={() => void roomsQuery.refetch()}
             disabled={roomsQuery.isFetching}
-            aria-label="Actualizar salas"
-            title="Actualizar salas"
+             aria-label={t('refreshRooms')}
+             title={t('refreshRooms')}
           >
             <RefreshCw size={17} className={roomsQuery.isFetching ? 'room-list-spinning' : ''} />
           </button>
@@ -138,12 +140,9 @@ export default function Rooms() {
 
         <div className="room-list-content">
           <div className="room-list-heading">
-            <span className="room-list-kicker">Explora nuevos rincones</span>
-            <h1 id="room-list-title">Salas de la comunidad</h1>
-            <p>
-              Toca una sala para entrar directamente. Cada casa tiene un ID único
-              generado por FarmCity.
-            </p>
+             <span className="room-list-kicker">{t('exploreCorners')}</span>
+             <h1 id="room-list-title">{t('communityRooms')}</h1>
+             <p>{t('communityDescription')}</p>
             <button
               type="button"
               className="room-list-create"
@@ -151,7 +150,7 @@ export default function Rooms() {
               disabled={createRoomMutation.isPending || (myRoomsQuery.data?.length ?? 0) >= 10}
               data-testid="button-create-new-room"
             >
-              <Plus size={16} /> {createRoomMutation.isPending ? 'Creando sala…' : 'Crear nueva sala'}
+               <Plus size={16} /> {createRoomMutation.isPending ? `${t('createNewRoom')}…` : t('createNewRoom')}
             </button>
             {createRoomMutation.isError && (
               <p className="room-list-inline-error" role="alert">
@@ -165,8 +164,8 @@ export default function Rooms() {
           <section className="room-list-section" aria-labelledby="my-rooms-title">
             <div className="room-list-section-heading">
               <div>
-                <span className="room-list-kicker">Tu colección</span>
-                <h2 id="my-rooms-title">Mis salas</h2>
+                 <span className="room-list-kicker">{lang === 'en' ? 'Your collection' : 'Tu colección'}</span>
+                 <h2 id="my-rooms-title">{t('myRooms')}</h2>
               </div>
               <span className="room-list-count">
                 {myRoomsQuery.data?.length ?? 0}/10
@@ -176,7 +175,7 @@ export default function Rooms() {
             {myRoomsQuery.isLoading && (
               <div className="room-list-state" role="status">
                 <span className="room-list-loader" aria-hidden="true" />
-                Cargando tus salas…
+               {t('loadingRooms')}
               </div>
             )}
 
@@ -189,8 +188,8 @@ export default function Rooms() {
             {!myRoomsQuery.isLoading && !myRoomsQuery.isError && myRoomsQuery.data?.length === 0 && (
               <div className="room-list-state room-list-empty">
                 <span aria-hidden="true">🏡</span>
-                <strong>Aún no tienes salas</strong>
-                <span>Crea tu primera sala con el botón de arriba.</span>
+                 <strong>{t('noRooms')}</strong>
+                 <span>{t('noRoomsHint')}</span>
               </div>
             )}
 
@@ -208,7 +207,7 @@ export default function Rooms() {
                       <div className="room-list-card-copy">
                         <strong>{room.name}</strong>
                         <span className="room-list-owner">
-                          {room.isPublic ? 'Pública' : 'Privada'} · Creada el {formatRoomDate(room.createdAt)}
+                           {room.isPublic ? t('public') : t('private')} · {t('createdOn')} {formatRoomDate(room.createdAt, lang)}
                         </span>
                         <span className="room-list-id">
                           ID: <code>{room.id}</code>
@@ -222,7 +221,7 @@ export default function Rooms() {
                         onClick={() => setLocation(`/room-editor?room=${encodeURIComponent(room.id)}`)}
                         data-testid={`button-edit-room-${room.id}`}
                       >
-                        <Edit3 size={14} /> Editar
+                         <Edit3 size={14} /> {t('edit')}
                       </button>
                       <button
                         type="button"
@@ -231,7 +230,7 @@ export default function Rooms() {
                         disabled={deleteRoomMutation.isPending}
                         data-testid={`button-delete-room-${room.id}`}
                       >
-                        <Trash2 size={14} /> Eliminar
+                         <Trash2 size={14} /> {t('delete')}
                       </button>
                     </div>
                   </article>
@@ -243,8 +242,8 @@ export default function Rooms() {
           <section className="room-list-section" aria-labelledby="public-rooms-title">
             <div className="room-list-section-heading">
               <div>
-                <span className="room-list-kicker">Explora nuevos rincones</span>
-                <h2 id="public-rooms-title">Salas de la comunidad</h2>
+                 <span className="room-list-kicker">{t('exploreCorners')}</span>
+                 <h2 id="public-rooms-title">{t('communityRooms')}</h2>
               </div>
               <span className="room-list-count">{publicRooms.length}</span>
             </div>
@@ -252,7 +251,7 @@ export default function Rooms() {
           {roomsQuery.isLoading && (
             <div className="room-list-state" role="status">
               <span className="room-list-loader" aria-hidden="true" />
-              Buscando salas abiertas…
+               {t('loadingPublicRooms')}
             </div>
           )}
 
@@ -265,8 +264,8 @@ export default function Rooms() {
           {!roomsQuery.isLoading && !roomsQuery.isError && publicRooms.length === 0 && (
             <div className="room-list-state room-list-empty">
               <span aria-hidden="true">🌱</span>
-              <strong>Aún no hay salas públicas</strong>
-              <span>Crea la primera desde “Mi Casa” y aparecerá aquí.</span>
+               <strong>{t('noPublicRooms')}</strong>
+               <span>{t('noPublicRoomsHint')}</span>
             </div>
           )}
 
@@ -289,7 +288,7 @@ export default function Rooms() {
                     </span>
                   </span>
                   <span className="room-list-card-meta">
-                    <span>{formatRoomDate(room.createdAt)}</span>
+                     <span>{formatRoomDate(room.createdAt, lang)}</span>
                     {room.hasPassword && (
                       <span title="Esta sala tiene una contraseña">
                         <LockKeyhole size={13} aria-label="Sala con contraseña" />
@@ -304,9 +303,9 @@ export default function Rooms() {
           </section>
 
           <footer className="room-list-footer">
-            <span>Las salas privadas no aparecen en este listado.</span>
+             <span>{t('privateRoomsNote')}</span>
             <button type="button" onClick={() => setLocation('/plaza')}>
-              <ArrowLeft size={14} /> Volver a la plaza
+               <ArrowLeft size={14} /> {t('backToPlaza')}
             </button>
           </footer>
         </div>

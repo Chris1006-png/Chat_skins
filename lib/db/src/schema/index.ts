@@ -3,6 +3,10 @@ import { pgTable, serial, text, boolean, timestamp, integer, real, primaryKey, u
 export const playersTable = pgTable("players", {
   id: serial("id").primaryKey(),
   username: text("username").unique().notNull(),
+  age: integer("age"),
+  nickname: text("nickname"),
+  status: text("status"),
+  language: varchar("language", { length: 5 }).default("es").notNull(),
   passwordHash: text("password_hash").notNull(),
   isOnline: boolean("is_online").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

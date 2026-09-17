@@ -28,6 +28,10 @@ export const RegisterResponse = zod.object({
   "player": zod.object({
   "id": zod.number().int(),
   "username": zod.string(),
+  "age": zod.number().int().nullable(),
+  "nickname": zod.string().nullable(),
+  "status": zod.string().nullable(),
+  "language": zod.enum(['es', 'en']),
   "createdAt": zod.coerce.date(),
   "isOnline": zod.boolean(),
   "avatar": zod.union([zod.object({
@@ -59,6 +63,10 @@ export const LoginResponse = zod.object({
   "player": zod.object({
   "id": zod.number().int(),
   "username": zod.string(),
+  "age": zod.number().int().nullable(),
+  "nickname": zod.string().nullable(),
+  "status": zod.string().nullable(),
+  "language": zod.enum(['es', 'en']),
   "createdAt": zod.coerce.date(),
   "isOnline": zod.boolean(),
   "avatar": zod.union([zod.object({
@@ -92,6 +100,10 @@ export const LogoutResponse = zod.object({
 export const GetMeResponse = zod.object({
   "id": zod.number().int(),
   "username": zod.string(),
+  "age": zod.number().int().nullable(),
+  "nickname": zod.string().nullable(),
+  "status": zod.string().nullable(),
+  "language": zod.enum(['es', 'en']),
   "createdAt": zod.coerce.date(),
   "isOnline": zod.boolean(),
   "avatar": zod.union([zod.object({
@@ -106,6 +118,55 @@ export const GetMeResponse = zod.object({
   "accessory": zod.string().nullable(),
   "accessoryColor": zod.string()
 }),zod.null()]).optional()
+})
+
+
+/**
+ * @summary Update the current player's profile
+ */
+export const updateProfileBodyUsernameMin = 3;
+export const updateProfileBodyUsernameMax = 20;
+
+export const updateProfileBodyAgeMax = 120;
+
+export const updateProfileBodyNicknameMax = 24;
+
+export const updateProfileBodyStatusMax = 120;
+
+
+
+export const UpdateProfileBody = zod.object({
+  "username": zod.string().min(updateProfileBodyUsernameMin).max(updateProfileBodyUsernameMax).optional(),
+  "age": zod.number().int().min(1).max(updateProfileBodyAgeMax).nullish(),
+  "nickname": zod.string().max(updateProfileBodyNicknameMax).nullish(),
+  "status": zod.string().max(updateProfileBodyStatusMax).nullish(),
+  "language": zod.enum(['es', 'en']).optional()
+})
+
+export const UpdateProfileResponse = zod.object({
+  "player": zod.object({
+  "id": zod.number().int(),
+  "username": zod.string(),
+  "age": zod.number().int().nullable(),
+  "nickname": zod.string().nullable(),
+  "status": zod.string().nullable(),
+  "language": zod.enum(['es', 'en']),
+  "createdAt": zod.coerce.date(),
+  "isOnline": zod.boolean(),
+  "avatar": zod.union([zod.object({
+  "id": zod.number().int(),
+  "playerId": zod.number().int(),
+  "skinColor": zod.string(),
+  "hairColor": zod.string(),
+  "hairStyle": zod.string(),
+  "shirtColor": zod.string(),
+  "pantsColor": zod.string(),
+  "hatStyle": zod.string().nullable(),
+  "accessory": zod.string().nullable(),
+  "accessoryColor": zod.string()
+}),zod.null()]).optional()
+}),
+  "token": zod.string()
 })
 
 
@@ -143,6 +204,10 @@ export const GetPlayerParams = zod.object({
 export const GetPlayerResponse = zod.object({
   "id": zod.number().int(),
   "username": zod.string(),
+  "age": zod.number().int().nullable(),
+  "nickname": zod.string().nullable(),
+  "status": zod.string().nullable(),
+  "language": zod.enum(['es', 'en']),
   "createdAt": zod.coerce.date(),
   "isOnline": zod.boolean(),
   "avatar": zod.union([zod.object({

@@ -16,6 +16,10 @@ export interface AvatarData {
 export interface PlayerData {
   id: number;
   username: string;
+  age: number | null;
+  nickname: string | null;
+  status: string | null;
+  language: 'es' | 'en';
   createdAt: string;
   isOnline: boolean;
   avatar?: AvatarData;

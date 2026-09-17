@@ -2,9 +2,11 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { Home as HomeIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
+import { useLanguage } from '@/contexts/language-context';
 import { IsometricCanvas } from '@/components/isometric-canvas';
 import type { LocalAction, RoomWall } from '@/components/isometric-canvas';
 import { OwnAvatarPanel } from '@/components/panels/own-avatar-panel';
+import { SettingsPanel } from '@/components/panels/settings-panel';
 import { OtherPlayerPanel } from '@/components/panels/other-player-panel';
 import { WorldObjectPanel } from '@/components/panels/world-object-panel';
 import type { WorldObjectType } from '@/components/panels/world-object-panel';
@@ -57,7 +59,8 @@ type PanelState =
   | { kind: 'object'; objectType: WorldObjectType };
 
 export default function Plaza() {
-  const { token, player: authPlayer, logout } = useAuth();
+  const { token, player: authPlayer, login, logout } = useAuth();
+  const { t } = useLanguage();
   const [, setLocation] = useLocation();
   const roomIdFromUrl = new URLSearchParams(window.location.search).get('room');
 
@@ -72,6 +75,7 @@ export default function Plaza() {
   const [chatInput, setChatInput] = useState('');
   const [selectedChatEffect, setSelectedChatEffect] = useState<ChatEffect>('sparkles');
   const [isChatEffectPickerOpen, setIsChatEffectPickerOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [panel, setPanel] = useState<PanelState | null>(null);
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting');
   const [roomError, setRoomError] = useState<string | null>(null);
@@ -471,6 +475,10 @@ export default function Plaza() {
           }
         }
         break;
+      case 'settings':
+        setPanel(null);
+        setIsSettingsOpen(true);
+        break;
       default:
         break;
     }
@@ -558,10 +566,10 @@ export default function Plaza() {
             }}
           >
              {connectionState === 'connected'
-               ? '● En línea'
+               ? `● ${t('online')}`
                : connectionState === 'connecting'
-                 ? '● Conectando...'
-                 : '● Reconectando...'}
+                 ? `● ${t('connecting')}`
+                 : `● ${t('reconnecting')}`}
           </span>
         </div>
 
@@ -587,7 +595,7 @@ export default function Plaza() {
               setLocation('/');
             }}
           >
-            Salir
+             {t('logout')}
           </button>
         </div>
       </div>
@@ -675,7 +683,7 @@ export default function Plaza() {
               ref={chatInputRef}
               className="flex-1 bg-transparent font-['VT323'] text-base focus:outline-none"
               style={{ color: '#fff' }}
-              placeholder="Decir..."
+               placeholder={t('chatPlaceholder')}
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => {
@@ -716,11 +724,11 @@ export default function Plaza() {
           }}
         >
           {[
-            { icon: HomeIcon, label: 'Mi Casa', badge: null, action: () => setLocation('/room-editor') },
-            { emoji: '🚪', label: 'Salas', badge: null, action: () => setLocation('/rooms') },
-            { emoji: '🎒', label: 'Inventario', badge: null },
-            { emoji: '📬', label: 'Solicitudes', badge: 0 },
-            { emoji: '⚙️', label: 'Ajustes', badge: null },
+             { icon: HomeIcon, label: t('myHouse'), badge: null, action: () => setLocation('/room-editor') },
+             { emoji: '🚪', label: t('rooms'), badge: null, action: () => setLocation('/rooms') },
+             { emoji: '🎒', label: t('inventory'), badge: null },
+             { emoji: '📬', label: t('requests'), badge: 0 },
+             { emoji: '⚙️', label: t('settingsShort'), badge: null, action: () => setIsSettingsOpen(true) },
           ].map(({ emoji, icon: ActionIcon, label, badge, action }) => (
             <button
               key={label}
@@ -828,6 +836,9 @@ export default function Plaza() {
       {panel?.kind === 'self' && authPlayer.avatar && (
         <OwnAvatarPanel
           username={authPlayer.username}
+          nickname={authPlayer.nickname}
+          status={authPlayer.status}
+          age={authPlayer.age}
           avatar={authPlayer.avatar as Avatar}
           onClose={() => setPanel(null)}
           onAction={handlePlayerAction}
@@ -843,6 +854,15 @@ export default function Plaza() {
         <WorldObjectPanel
           objectType={panel.objectType}
           onClose={() => setPanel(null)}
+        />
+      )}
+      {isSettingsOpen && (
+        <SettingsPanel
+          player={authPlayer}
+          onClose={() => setIsSettingsOpen(false)}
+          onSaved={(updatedPlayer, nextToken) => {
+            login(nextToken, updatedPlayer);
+          }}
         />
       )}
     </div>

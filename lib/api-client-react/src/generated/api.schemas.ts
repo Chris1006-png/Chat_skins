@@ -48,9 +48,24 @@ export interface AvatarOptions {
   accessoryColors: string[];
 }
 
+export type PlayerLanguage = typeof PlayerLanguage[keyof typeof PlayerLanguage];
+
+
+export const PlayerLanguage = {
+  es: 'es',
+  en: 'en',
+} as const;
+
 export interface Player {
   id: number;
   username: string;
+  /** @nullable */
+  age: number | null;
+  /** @nullable */
+  nickname: string | null;
+  /** @nullable */
+  status: string | null;
+  language: PlayerLanguage;
   createdAt: string;
   isOnline: boolean;
   avatar?: Avatar | null;
@@ -69,6 +84,39 @@ export interface PlayerSummary {
 export interface RegisterInput {
   username: string;
   password: string;
+}
+
+export type ProfileUpdateLanguage = typeof ProfileUpdateLanguage[keyof typeof ProfileUpdateLanguage];
+
+
+export const ProfileUpdateLanguage = {
+  es: 'es',
+  en: 'en',
+} as const;
+
+export interface ProfileUpdate {
+  /**
+     * @minLength 3
+     * @maxLength 20
+     */
+  username?: string;
+  /**
+     * @minimum 1
+     * @maximum 120
+     * @nullable
+     */
+  age?: number | null;
+  /**
+     * @maxLength 24
+     * @nullable
+     */
+  nickname?: string | null;
+  /**
+     * @maxLength 120
+     * @nullable
+     */
+  status?: string | null;
+  language?: ProfileUpdateLanguage;
 }
 
 export interface LoginInput {

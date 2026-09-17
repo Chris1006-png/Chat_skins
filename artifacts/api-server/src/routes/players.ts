@@ -68,6 +68,10 @@ router.get("/players/:id", async (req, res) => {
   res.json({
     id: player.id,
     username: player.username,
+    age: player.age,
+    nickname: player.nickname,
+    status: player.status,
+    language: player.language,
     createdAt: player.createdAt,
     isOnline: player.isOnline,
     avatar: avatar[0] ?? undefined,
