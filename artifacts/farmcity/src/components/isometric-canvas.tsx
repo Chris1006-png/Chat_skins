@@ -707,9 +707,9 @@ function drawChatEffect(
   const particleSets: Record<ChatEffect, EffectParticle[]> = {
     // A soft arc keeps the sparkle close to the portrait without boxing it in.
     sparkles: [
-      { glyph: '✧', x: -24, y: -6, size: 15, phase: 0 },
-      { glyph: '✦', x: 0, y: -28, size: 24, phase: 1.2 },
-      { glyph: '✧', x: 24, y: -12, size: 14, phase: 2.2 },
+      { glyph: '✧', x: -17, y: -20, size: 14, phase: 0 },
+      { glyph: '✦', x: 0, y: -31, size: 25, phase: 1.2 },
+      { glyph: '✧', x: 17, y: -20, size: 14, phase: 2.2 },
     ],
     // Hearts rise from one side of the portrait in a light diagonal trail.
     hearts: [
@@ -719,9 +719,9 @@ function drawChatEffect(
     ],
     // Faces read better as a small friendly row above the avatar.
     faces: [
-      { glyph: '😊', x: -22, y: -14, size: 15, phase: 0 },
-      { glyph: '😄', x: 0, y: -25, size: 18, phase: 1 },
-      { glyph: '😆', x: 22, y: -13, size: 15, phase: 2 },
+      { glyph: '😊', x: -26, y: 12, size: 15, phase: 0 },
+      { glyph: '😄', x: -13, y: -10, size: 19, phase: 1 },
+      { glyph: '😆', x: 10, y: -25, size: 15, phase: 2 },
     ],
     // Musical notes follow a rising path instead of sitting at fixed corners.
     music: [
