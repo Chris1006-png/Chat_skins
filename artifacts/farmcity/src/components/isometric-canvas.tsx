@@ -697,18 +697,38 @@ function drawChatEffect(
 ): void {
   if (!effect) return;
 
-  const pulse = 1 + Math.sin(now / 180) * 0.05;
-  const points = [
-    [-26, -18],
-    [25, -20],
-    [-24, 20],
-    [24, 19],
-  ] as const;
-  const glyphs: Record<ChatEffect, string[]> = {
-    sparkles: ['✦', '✧', '✦', '✧'],
-    hearts: ['♥', '❤', '♥', '❤'],
-    faces: ['😄', '😊', '😆', '🙂'],
-    music: ['♪', '♫', '♪', '♫'],
+  type EffectParticle = {
+    glyph: string;
+    x: number;
+    y: number;
+    size: number;
+    phase: number;
+  };
+  const particleSets: Record<ChatEffect, EffectParticle[]> = {
+    // A soft arc keeps the sparkle close to the portrait without boxing it in.
+    sparkles: [
+      { glyph: '✧', x: -24, y: -6, size: 15, phase: 0 },
+      { glyph: '✦', x: 0, y: -28, size: 24, phase: 1.2 },
+      { glyph: '✧', x: 24, y: -12, size: 14, phase: 2.2 },
+    ],
+    // Hearts rise from one side of the portrait in a light diagonal trail.
+    hearts: [
+      { glyph: '♥', x: -22, y: 8, size: 14, phase: 0 },
+      { glyph: '❤', x: 0, y: -18, size: 21, phase: 1 },
+      { glyph: '♥', x: 22, y: -5, size: 14, phase: 2 },
+    ],
+    // Faces read better as a small friendly row above the avatar.
+    faces: [
+      { glyph: '😊', x: -22, y: -14, size: 15, phase: 0 },
+      { glyph: '😄', x: 0, y: -25, size: 18, phase: 1 },
+      { glyph: '😆', x: 22, y: -13, size: 15, phase: 2 },
+    ],
+    // Musical notes follow a rising path instead of sitting at fixed corners.
+    music: [
+      { glyph: '♪', x: -23, y: 10, size: 16, phase: 0 },
+      { glyph: '♫', x: 0, y: -13, size: 20, phase: 1 },
+      { glyph: '♪', x: 22, y: -30, size: 15, phase: 2 },
+    ],
   };
   const colors: Record<ChatEffect, string> = {
     sparkles: '#FFD34E',
@@ -716,24 +736,23 @@ function drawChatEffect(
     faces: '#FFD166',
     music: '#C77DFF',
   };
-  const fontSize = Math.max(14, Math.round(18 * scale * pulse));
 
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.font = `${fontSize}px serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = colors[effect];
   ctx.shadowColor = effect === 'sparkles' ? '#FFF3A3' : 'rgba(0,0,0,0.45)';
   ctx.shadowBlur = 4;
 
-  glyphs[effect].forEach((glyph, index) => {
-    const [offsetX, offsetY] = points[index];
-    const drift = Math.sin(now / 260 + index) * 2;
+  particleSets[effect].forEach(({ glyph, x, y, size, phase }) => {
+    const drift = Math.sin(now / 260 + phase) * 2.5;
+    const pulse = 1 + Math.sin(now / 200 + phase) * 0.04;
+    ctx.font = `${Math.max(13, Math.round(size * scale * pulse))}px serif`;
     ctx.fillText(
       glyph,
-      centerX + offsetX * scale,
-      centerY + offsetY * scale + drift,
+      centerX + x * scale,
+      centerY + y * scale + drift,
     );
   });
   ctx.restore();
